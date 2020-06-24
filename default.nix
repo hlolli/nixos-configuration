@@ -76,6 +76,9 @@
   networking.firewall.enable = true;
   programs.gnupg.agent.enable = true;
 
+  # linux trace tool
+  programs.bcc.enable = true;
+
   boot.kernelParams = [ "acpi_enforce_resources=lax acpi_osi='!Windows 2015' acpi_backlight=vendor" ]; # acpi=force
 
   boot.blacklistedKernelModules = [ "ideapad_laptop" "nouveau" ];

@@ -53,6 +53,7 @@
     udevil
     unzip
     upower
+    usbutils
     valgrind
     wavemon
     wget

@@ -3,10 +3,19 @@ with lib;
 let
   nvidia = pkgs.linuxPackages.nvidia_x11;
   xsaneGimp = pkgs.xsane.override { gimpSupport = true; };
+  obsPlugins = pkgs.runCommand "obs-studio-plugins" {
+    preferLocalBuild = true;
+    allowSubstitutes = false;
+  } ''
+    mkdir $out
+    for plugin in ${concatStringsSep " " [pkgs.obs-v4l2sink]}; do
+      ln -s "$plugin"/* $out/
+    done
+  '';
+
 in
 {
   config = {
-
     services.xserver = {
       enable = true;
       layout = "is";

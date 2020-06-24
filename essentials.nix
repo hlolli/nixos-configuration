@@ -16,7 +16,7 @@ in
         frescobaldi
         galculator
         go
-        google-chrome
+        google-chrome-dev
         gv
         imagemagick
         ispell
