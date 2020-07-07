@@ -31,11 +31,12 @@
     ./development/wasm.nix
 
     ## hardware ##
-    ./hardware/bluetooth.nix
+    # ./hardware/bluetooth.nix
 
     ## graphics/X11 ##
+    ./graphics/applications.nix
     # ./graphics/wine.nix
-    ./graphics/xserver.nix
+    # ./graphics/xserver.nix
 
     ## shells ##
     ./shells/core.nix
@@ -62,7 +63,7 @@
   hardware.opengl = {
     enable = true;
     driSupport32Bit = true;
-    extraPackages = [ pkgs.linuxPackages.nvidia_x11.bin ];
+    # extraPackages = [ pkgs.linuxPackages.nvidia_x11.bin ];
   };
   hardware.enableRedistributableFirmware = true;
 

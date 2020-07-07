@@ -1,17 +1,16 @@
 { pkgs }:
 let
-  xrandr = "${pkgs.xorg.xrandr}/bin/xrandr";
   wallpaper = pkgs.fetchurl {
     url = "https://wallpapersultra.net/wp-content/uploads/Beautiful-Wallpaper-Nature-Lake.jpg";
     sha256 = "19bk4wh8q9xizn8vx0hy9xrsn3kk85jy24ibck3h3pwbqpavapx6";
   };
   cfg = pkgs.writeTextFile {
-    name = "i3config";
-    destination = "/share/i3config";
+    name = "swayconfig";
+    destination = "/share/swayconfig";
     text = ''
       set $mod Mod4
       font pango:Fira Mono 17
-      new_window pixel 0
+      default_border pixel 0
       floating_modifier $mod
 
       # Disable scrolling window bar
@@ -147,13 +146,7 @@ let
           }
       }
 
-
-      exec --no-startup-id ${xrandr} --setprovideroutputsource modesetting NVIDIA-0
-      exec --no-startup-id ${xrandr} | grep 'HDMI-0 connected' || sleep 0.2s; xrandr --auto
-      exec --no-startup-id ${xrandr} | grep 'HDMI-0 connected' && \
-        ${xrandr} --auto && ${xrandr} --output eDP-1-1 --mode 1920x1080 --primary --output HDMI-0 --mode 1920x1080
       exec --no-startup-id sleep 0.5s; ${pkgs.feh}/bin/feh --bg-scale ${wallpaper}
-      exec --no-startup-id ${pkgs.xorg.setxkbmap}/bin/setxkbmap is
       exec --no-startup-id ${pkgs.networkmanagerapplet}/bin/nm-applet
       exec --no-startup-id sleep 0.5s; ${pkgs.numlockx}/bin/numlockx on
     '';
