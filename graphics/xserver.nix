@@ -122,7 +122,7 @@ in
       xorg.libxcb
       xorg.xmodmap
       xorg.xev
-      xorg.xkill
+
       xorg.xf86videointel
       xorg.xwininfo
       xorg.xbacklight

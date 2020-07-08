@@ -84,6 +84,7 @@ in
       xclip
       xsaneGimp
       xsel
+      xorg.xkill
     ];
   };
 }

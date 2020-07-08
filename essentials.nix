@@ -1,7 +1,6 @@
 { config, lib, pkgs, ... }:
 with lib;
 let
-  nodejs = pkgs.nodejs-13_x;
   frescobaldi = pkgs.frescobaldi.override { lilypond = pkgs.lilypond-with-fonts; };
 in
 {
@@ -24,7 +23,6 @@ in
         lilypond-with-fonts
         matterbridge # <social-media (delete?)>
         nodePackages.node2nix
-        nodejs
         pandoc
         ruby
         shellcheck
@@ -35,9 +33,6 @@ in
         xclip
         xcompmgr
         xdotool
-        (yarn.override
-          ({ inherit nodejs; })
-        )
       ];
   };
 }

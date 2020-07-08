@@ -26,6 +26,7 @@
     ## development ##
     ./development/android.nix
     ./development/docker.nix
+    ./development/javascript.nix
     ./development/jdk.nix
     ./development/python.nix
     ./development/wasm.nix
