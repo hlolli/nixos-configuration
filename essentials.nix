@@ -2,26 +2,40 @@
 with lib;
 let
   frescobaldi = pkgs.frescobaldi.override { lilypond = pkgs.lilypond-with-fonts; };
+  slack = pkgs.slack.overrideAttrs(oldAttrs: rec {
+    rpath = makeLibraryPath [ pkgs.pipewire ] + ":" + oldAttrs.rpath;
+    postInstall = ''
+      rm $out/bin/slack
+      makeWrapper $out/lib/slack/slack $out/bin/slack \
+        --prefix XDG_CURRENT_DESKTOP : Unity \
+        --prefix XDG_DATA_DIRS : $GSETTINGS_SCHEMAS_PATH \
+        --prefix PATH : ${pkgs.xdg_utils}/bin
+    '';
+  });
 in
 {
   config = {
     environment.systemPackages =
       with pkgs; [
-        discord
+        ripcord # a discord client
         emacs
         font-awesome-ttf
         filezilla
         franz # <social-media (delete?)>
         frescobaldi
         galculator
+        gcalcli # google-calendar cli
         go
-        google-chrome-dev
+        (google-chrome-dev.overrideAttrs (oldAttrs: rec {
+          rpath = makeLibraryPath [ pkgs.pipewire ] + ":" + oldAttrs.rpath;
+        }))
         gv
         imagemagick
         ispell
         jq
-        lilypond-with-fonts
-        matterbridge # <social-media (delete?)>
+        keybase
+        lilypond
+        ncdu
         nodePackages.node2nix
         pandoc
         ruby

@@ -9,10 +9,11 @@ with lib;
         jack2.out
         jack_capture
         jack_rack
-        jackmix
+        # jackmix
         jack_oscrolloscope
         jackmeter
         qjackctl
+        (pkgs.callPackage ./ebumeter.nix {})
       ];
    };
 }

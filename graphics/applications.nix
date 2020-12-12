@@ -1,6 +1,19 @@
 { config, lib, pkgs, ... }:
 with lib;
 let
+  moz_overlay = import (pkgs.fetchFromGitHub
+    { owner = "mozilla";
+      repo = "nixpkgs-mozilla";
+      rev = "57c8084c7ef41366993909c20491e359bbb90f54";
+      sha256 = "0lchhjys1jj8fdiisd2718sqd63ys7jrj6hq6iq9l1gxj3mz2w81";
+    });
+  mozpkgs = import <nixpkgs> {
+    overlays = [ moz_overlay ];
+    config = {
+      allowUnfree = true;
+    };
+  };
+  # chromium = pkgs.chromium.override { libva = pkgs.libva; enableVaapi = true; useOzone = true; };
   xsaneGimp = pkgs.xsane.override { gimpSupport = true; };
   obsPlugins = pkgs.runCommand "obs-studio-plugins" {
     preferLocalBuild = true;
@@ -12,18 +25,9 @@ let
     done
   '';
 
-in
+in with mozpkgs;
 {
   config = {
-   # services.xserver = {
-   #   enable = true;
-   #   layout = "is";
-   #   synaptics.enable = true;
-   #   synaptics.twoFingerScroll = true;
-   #   synaptics.tapButtons = false;
-   #   synaptics.accelFactor = "0.1";
-   #   synaptics.fingersMap = [ 1 3 2 ];
-   # };
    fonts.fonts = with pkgs;
       [ fira-mono fira dejavu_fonts ];
     environment.systemPackages = with pkgs; [
@@ -36,7 +40,7 @@ in
       elementary-xfce-icon-theme
       evince
       ffmpeg-full
-      firefox
+      # firefox
       fontconfig.out
       gimp
       # glxinfo
@@ -52,6 +56,7 @@ in
       gnome3.nautilus
       gnome3.gnome-user-share
       gnome3.dconf
+      gnome3.gnome-session
       gnome3.gnome-system-monitor
       gnome3.gnome_terminal
       gparted
@@ -62,12 +67,14 @@ in
       libva-full
       libvdpau-va-gl
       # meld
+      latest.firefox-nightly-bin
       mypaint
       mpv
       # mpv-with-scripts
       networkmanager
       numlockx
       # owncloudclient
+      obsPlugins
       obs-studio
       olive-editor
       picard
@@ -85,6 +92,7 @@ in
       xsaneGimp
       xsel
       xorg.xkill
+      zoom-us
     ];
   };
 }

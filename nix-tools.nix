@@ -16,6 +16,7 @@ in
         nix-prefetch-github
         nix-prefetch-scripts
         nixops
+        nixpkgs-review
       ];
   };
 }

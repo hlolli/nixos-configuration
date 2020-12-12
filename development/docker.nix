@@ -7,7 +7,7 @@ with lib;
   };
   config.virtualisation.docker = {
     enable = true;
-    enableNvidia = true;
+    enableNvidia = false;
   };
 
   config.environment.systemPackages =
@@ -22,8 +22,9 @@ with lib;
     google-cloud-sdk
     kubernetes
     kubernetes-helm
+    lazydocker
     minikube
-    nvidia-docker
+    # nvidia-docker
     libguestfs
     libguestfs-appliance
     pinentry # for gpg deamon

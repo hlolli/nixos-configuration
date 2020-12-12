@@ -1,9 +1,19 @@
 { pkgs }:
 let
-  wallpaper = pkgs.fetchurl {
-    url = "https://wallpapersultra.net/wp-content/uploads/Beautiful-Wallpaper-Nature-Lake.jpg";
-    sha256 = "19bk4wh8q9xizn8vx0hy9xrsn3kk85jy24ibck3h3pwbqpavapx6";
-  };
+  pythonenv = python-packages: with python-packages; [
+   i3ipc
+  ];
+  python3WithEnv = pkgs.python3.withPackages pythonenv;
+  swayfader = pkgs.fetchurl {
+      url = "https://raw.githubusercontent.com/jake-is-a-legend/swayfader/0f9485f9a3baa9845470d142e45141027f5cbbf0/swayfader.py";
+      sha256 = "0d59p5sp78w1s8wckgypyif5sdibnx925p5f6f4l5blx7mwqlsmy";
+    };
+
+  customXLayout = pkgs.writeText "xkb-layout" ''
+    ! disable mouseclick2 (paste etc)
+    pointer = 1 25 3 4 5 6 7 8 9
+  '';
+
   cfg = pkgs.writeTextFile {
     name = "swayconfig";
     destination = "/share/swayconfig";
@@ -16,6 +26,9 @@ let
       # Disable scrolling window bar
       bindsym button4 nop
       bindsym button5 nop
+
+      # Disable middle mouseclick
+      bindsym button2 nop
 
       bindsym $mod+Return exec ${pkgs.gnome3.gnome-terminal}/bin/gnome-terminal
        # kill focused window
@@ -129,26 +142,18 @@ let
               bindsym Escape mode "default"
       }
 
-      bindsym $mod+r mode "resize"
+      gaps inner 20
+      gaps outer 10
+      set $wallpapers_path $HOME/Pictures/wallpapers
+      output * bg `find $wallpapers_path -type f | shuf -n 1` fill
 
-      bar {
-          font pango:Fira Mono, FontAwesome 17
-          position bottom
-          status_command ${pkgs.i3status-rust}/bin/i3status-rs ${./i3status.toml}
-          colors {
-              separator #666666
-              background #222222
-              statusline #dddddd
-              focused_workspace #0088CC #0088CC #ffffff
-              active_workspace #333333 #333333 #ffffff
-              inactive_workspace #333333 #333333 #888888
-              urgent_workspace #2f343a #900000 #ffffff
-          }
-      }
-
-      exec --no-startup-id sleep 0.5s; ${pkgs.feh}/bin/feh --bg-scale ${wallpaper}
-      exec --no-startup-id ${pkgs.networkmanagerapplet}/bin/nm-applet
-      exec --no-startup-id sleep 0.5s; ${pkgs.numlockx}/bin/numlockx on
+      # exec {pkgs.networkmanagerapplet}/bin/nm-applet --indicator || true;
+      exec ${pkgs.numlockx}/bin/numlockx on || true;
+      exec ${pkgs.alsaUtils}/bin/alsactl init || true;
+      exec ${pkgs.pipewire}/bin/pipewire & ${pkgs.xdg-desktop-portal-wlr}/libexec/xdg-desktop-portal-wlr || true;
+      exec ${python3WithEnv}/bin/python ${swayfader}
+      exec ${pkgs.xorg.xmodmap}/bin/xmodmap ${customXLayout}
+      exec "systemctl --user import-environment; systemctl --user start sway-session.target"
     '';
   };
 in

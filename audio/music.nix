@@ -8,6 +8,7 @@ with lib;
         ardour
         audacity
         cadence
+        csound
         drumgizmo
         faust2
         faust2csound

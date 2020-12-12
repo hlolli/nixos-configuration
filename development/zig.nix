@@ -1,16 +1,21 @@
 { config, lib, pkgs, ... }:
 
-let zigCanary = pkgs.zig.overrideAttrs(oldAttrs: {
+let
+  zig_ = pkgs.zig.override({ llvmPackages = pkgs.llvmPackages_11; });
+  zigCanary = zig_.overrideAttrs(oldAttrs: {
+   pname = "ziglang";
    src = pkgs.fetchFromGitHub {
      owner = "ziglang";
-     repo = pname;
-     rev = "67e97a1f0fe661b05234e24a58be15d9b48588f2";
-     sha256 = "13dwm2zpscn4n0p5x8ggs9n7mwmq9cgip383i3qqphg7m3pkls6z";
+     repo = "zig";
+     rev = "7c93d9aacb5987c3ada52f7f68c6f38594e08612";
+     sha256 = "0nl4kzb2jn8lylk5zqx4879zwvn9lpca4mbwi6q7hys52flqznp7";
    };
+   doCheck = false;
+
 });
 
 in {
-  config.environment.systemPackages = with pkgs; [
+  config.environment.systemPackages = [
     zigCanary
   ];
 }

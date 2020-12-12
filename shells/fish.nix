@@ -4,6 +4,10 @@ let interactiveShellInit = ''
   function ll
     ${pkgs.exa}/bin/exa --all --long --header --grid $argv
   end
+
+  function workpostinstall
+    npx patch-package && npm rebuild sharp
+  end
 '';
 
 in {

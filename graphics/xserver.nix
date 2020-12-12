@@ -1,7 +1,7 @@
 { config, lib, pkgs, ... }:
 with lib;
 let
-  nvidia = pkgs.linuxPackages.nvidia_x11;
+  # nvidia = pkgs.linuxPackages.nvidia_x11;
   xsaneGimp = pkgs.xsane.override { gimpSupport = true; };
   obsPlugins = pkgs.runCommand "obs-studio-plugins" {
     preferLocalBuild = true;
@@ -25,9 +25,9 @@ in
       synaptics.twoFingerScroll = true;
       synaptics.tapButtons = false;
       synaptics.accelFactor = "0.1";
-      synaptics.fingersMap = [ 1 3 2 ];
+      synaptics.fingersMap = [ 1 1 2 ];
       # xrandrHeads = [ "HDMI-0" "eDP1" ];
-      videoDrivers = [ "nvidia" "modesetting" ];
+      # videoDrivers = [ "nvidia" "modesetting" ];
 
       deviceSection = ''
         VendorName     "onboard"

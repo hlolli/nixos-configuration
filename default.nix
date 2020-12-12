@@ -1,6 +1,7 @@
 { config, lib, pkgs, ... }:
 
 {
+
   users.extraUsers.hlolli = {
     isNormalUser = true;
     uid = 1000;
@@ -30,12 +31,14 @@
     ./development/jdk.nix
     ./development/python.nix
     ./development/wasm.nix
+    ./development/zig.nix
 
     ## hardware ##
     # ./hardware/bluetooth.nix
 
     ## graphics/X11 ##
     ./graphics/applications.nix
+    ./graphics/nvidia.nix
     # ./graphics/wine.nix
     # ./graphics/xserver.nix
 
@@ -63,13 +66,22 @@
 
   hardware.opengl = {
     enable = true;
+    driSupport = true;
     driSupport32Bit = true;
-    # extraPackages = [ pkgs.linuxPackages.nvidia_x11.bin ];
+    extraPackages = [
+      pkgs.linuxPackages.nvidia_x11.bin
+      pkgs.libGL_driver
+      pkgs.linuxPackages.nvidia_x11.out
+      pkgs.vaapiIntel
+      pkgs.vaapiVdpau
+      pkgs.libvdpau-va-gl
+    ];
   };
   hardware.enableRedistributableFirmware = true;
 
   networking.hostName = "hlolli";
   networking.extraHosts = ''
+    127.0.0.1 localhost
     127.0.0.1 hlolli.local
   '';
 
@@ -81,19 +93,38 @@
   # linux trace tool
   programs.bcc.enable = true;
 
-  boot.kernelParams = [ "acpi_enforce_resources=lax acpi_osi='!Windows 2015' acpi_backlight=vendor" ]; # acpi=force
+  boot = {
+    extraModulePackages = [ pkgs.linuxPackages.v4l2loopback ];
 
-  boot.blacklistedKernelModules = [ "ideapad_laptop" "nouveau" ];
-  boot.extraModprobeConfig = ''
-    # thinkpad acpi
-    options snd slots=snd-hda-intel
-    options nvidia-drm modeset=1
-  '';
-  boot.extraModulePackages = [ pkgs.linuxPackages.v4l2loopback ];
+    extraModprobeConfig = ''
+      # thinkpad acpi
+      # options snd slots=snd-hda-intel
+      # options nvidia-drm modeset=1
+      # options snd-hda-intel id=NVidia index=1
 
-  boot.initrd.kernelModules = [ "nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" ];
+      options snd_hda_intel id=PCH,NVidia index=1,2 model=alc233-eapd
+      options snd_hda_intel enable=1,0
+      options snd-usb-audio index=0
+    '';
+
+    blacklistedKernelModules = [ "ideapad_laptop" ];
+
+    kernelParams = [
+      "acpi_enforce_resources=lax acpi_osi='!Windows 2015' acpi_backlight=vendor"
+    ];
+
+    # initrd.kernelModules = [ "nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" ];
+
+    kernel.sysctl = {
+      "kernel.nmi_watchdog" = 0;
+      "fs.inotify.max_user_watches" = 524288;
+      "vm.dirty_writeback_centisecs" = 1500;
+    };
+  };
 
   services.logind.extraConfig = "HandleLidSwitch=ignore";
+
+  security.hideProcessInformation = false;
 
   time.timeZone = "Europe/Berlin";
 }

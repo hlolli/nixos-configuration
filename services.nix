@@ -1,20 +1,34 @@
 { config, pkgs, ... }:
 
 with config;
+# let customXML = pkgs.writeText "custom.xml" "";
+# ''
+#      <?xml>
+#        <service-group>
+#          <name replace-wildcards="no">Example Service</name>
+#          <service protocol="ipv6">
+#            <type>_reactdev._tcp</type>
+#            <domain-name>local</domain-name>
+#            <host-name>hlolli.local</host-name>
+#            <port>8000</port>
+#          </service>
+#        </service-group>'';
+
 {
   programs.dconf.enable = true;
-  services.upower.enable = true;
-  services.lorri.enable = true;
-  services.dbus.packages = [ pkgs.gnome3.dconf ];
   services.avahi.enable = true;
   services.avahi.nssmdns = true;
-  services.avahi.publish.enable = true;
   services.avahi.publish.addresses = true;
-  services.printing.enable = true;
+  services.avahi.publish.enable = true;
+  services.dbus.packages = [ pkgs.gnome3.dconf ];
+  services.lorri.enable = true;
   services.printing.drivers = with pkgs; [ samsung-unified-linux-driver ];
+  services.printing.enable = true;
+  services.resolved.enable = true;
+  services.upower.enable = true;
+  services.keybase.enable = true;
+
   imports = [
-    # ./services/datomic-socks.nix
-    # ./services/nfs.nix
     ./custom-services/compton.nix
   ];
   customServices.compton = {
@@ -28,4 +42,7 @@ with config;
       mark-ovredir-focused = false;
     '';
   };
+  systemd.services.avahi-daemon.preStart = ''
+    mkdir -p /etc/avahi/services
+  '';
 }

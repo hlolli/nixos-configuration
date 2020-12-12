@@ -41,7 +41,6 @@
     pmutils
     pwgen
     reflex # <cli file-change detector>
-    rfkill
     rlwrap
     service-wrapper
     smartmontools

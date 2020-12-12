@@ -287,7 +287,7 @@ in
 
     systemd.user.services.compton = {
       description = "Compton X11 compositor";
-      wantedBy = [ "graphical-session.target" ];
+      wantedBy = [ "sway-session.target" ];
       after = [ "graphical-session-pre.target" ];
       partOf = [ "graphical-session.target" ];
       serviceConfig = {
