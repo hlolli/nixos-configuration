@@ -3,7 +3,7 @@
 with lib;
 {
   config.environment.systemPackages = with pkgs; [
-    (yarn.override ({ nodejs = pkgs.nodejs14; }))
-    nodejs14
+    (yarn.override { nodejs = nodejs-15_x; })
+    nodejs-15_x
   ];
 }

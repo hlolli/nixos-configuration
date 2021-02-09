@@ -25,7 +25,7 @@
     ./audio/pulseaudio.nix
 
     ## development ##
-    ./development/android.nix
+    # ./development/android.nix
     ./development/docker.nix
     ./development/javascript.nix
     ./development/jdk.nix
@@ -38,7 +38,7 @@
 
     ## graphics/X11 ##
     ./graphics/applications.nix
-    ./graphics/nvidia.nix
+    # ./graphics/nvidia.nix
     # ./graphics/wine.nix
     # ./graphics/xserver.nix
 
@@ -60,24 +60,27 @@
 
   ];
 
+
   nixpkgs.config.allowUnfree = true;
   nixpkgs.config.android_sdk.accept_license = true;
   nixpkgs.config.oraclejdk.accept_license = true;
 
   hardware.opengl = {
     enable = true;
-    driSupport = true;
-    driSupport32Bit = true;
-    extraPackages = [
-      pkgs.linuxPackages.nvidia_x11.bin
-      pkgs.libGL_driver
-      pkgs.linuxPackages.nvidia_x11.out
-      pkgs.vaapiIntel
-      pkgs.vaapiVdpau
-      pkgs.libvdpau-va-gl
-    ];
+    # driSupport = true;
+    # driSupport32Bit = true;
+    # extraPackages = [
+    #   pkgs.linuxPackages.nvidia_x11.bin
+    #   pkgs.libGL_driver
+    #   pkgs.linuxPackages.nvidia_x11.out
+    #   pkgs.vaapiIntel
+    #   pkgs.vaapiVdpau
+    #   pkgs.libvdpau-va-gl
+    # ];
   };
   hardware.enableRedistributableFirmware = true;
+  hardware.cpu.intel.updateMicrocode = true;
+  hardware.enableAllFirmware = true;
 
   networking.hostName = "hlolli";
   networking.extraHosts = ''
@@ -94,18 +97,18 @@
   programs.bcc.enable = true;
 
   boot = {
-    extraModulePackages = [ pkgs.linuxPackages.v4l2loopback ];
+    extraModulePackages = with config.boot.kernelPackages; [ pkgs.linuxPackages.v4l2loopback acpi_call ];
 
-    extraModprobeConfig = ''
-      # thinkpad acpi
-      # options snd slots=snd-hda-intel
-      # options nvidia-drm modeset=1
-      # options snd-hda-intel id=NVidia index=1
+    # extraModprobeConfig = ''
+    #   # thinkpad acpi
+    #   # options snd slots=snd-hda-intel
+    #   # options nvidia-drm modeset=1
+    #   # options snd-hda-intel id=NVidia index=1
 
-      options snd_hda_intel id=PCH,NVidia index=1,2 model=alc233-eapd
-      options snd_hda_intel enable=1,0
-      options snd-usb-audio index=0
-    '';
+    #   options snd_hda_intel id=PCH,NVidia index=1,2 model=alc233-eapd
+    #   options snd_hda_intel enable=1,0
+    #   options snd-usb-audio index=0
+    # '';
 
     blacklistedKernelModules = [ "ideapad_laptop" ];
 
@@ -113,18 +116,30 @@
       "acpi_enforce_resources=lax acpi_osi='!Windows 2015' acpi_backlight=vendor"
     ];
 
+    kernelModules = [ "coretemp" ];
+
+    initrd.kernelModules = [ "i915" "acpi_call" ];
+
     # initrd.kernelModules = [ "nvidia" "nvidia_modeset" "nvidia_uvm" "nvidia_drm" ];
 
     kernel.sysctl = {
       "kernel.nmi_watchdog" = 0;
       "fs.inotify.max_user_watches" = 524288;
       "vm.dirty_writeback_centisecs" = 1500;
+      "vm.swappiness" = 1;
     };
   };
 
-  services.logind.extraConfig = "HandleLidSwitch=ignore";
+  # https://github.com/NixOS/nixpkgs/issues/25820#issuecomment-534362529
+  # services.journald.extraConfig = "Storage=volatile";
 
-  security.hideProcessInformation = false;
+  # laoptop stuff
+  services.logind.extraConfig = "HandleLidSwitch=ignore";
+  services.thermald.enable = true;
+  services.tlp.enable = true;
+  services.fstrim.enable = true;
+
+  # security.hideProcessInformation = false;
 
   time.timeZone = "Europe/Berlin";
 }

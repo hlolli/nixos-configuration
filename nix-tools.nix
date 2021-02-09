@@ -4,8 +4,8 @@ let
   nix-prefetch-github = import (pkgs.fetchFromGitHub {
     owner = "seppeljordan";
     repo = "nix-prefetch-github";
-    rev = "638d8b062d4549927ca";
-    sha256 = "01c98cgs2gxlcw7pbx7r0i4k20la9ax8i243l2kxmz9102mn9g1y";
+    rev = "89dbb8d3829bd03894ec1b947080ebde652f2268";
+    sha256 = "0f6f6f4hj235clw57v70asx4vg1dpmblyzim5mx0b0n8ddbjp7jm";
   }
   );
 in
@@ -13,9 +13,9 @@ in
   config = {
     environment.systemPackages =
       with pkgs; [
-        nix-prefetch-github
-        nix-prefetch-scripts
-        nixops
+        # nix-prefetch-github
+        # nix-prefetch-scripts
+        # nixops
         nixpkgs-review
       ];
   };

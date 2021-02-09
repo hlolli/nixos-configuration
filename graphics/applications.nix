@@ -40,13 +40,12 @@ in with mozpkgs;
       elementary-xfce-icon-theme
       evince
       ffmpeg-full
-      # firefox
+      firefox
       fontconfig.out
       gimp
       # glxinfo
       gnome3.gnome_control_center
       gnome3.eog
-      gnome3.evolution
       gnome3.file-roller
       gnome3.gnome-font-viewer
       gnome3.mutter
@@ -66,8 +65,6 @@ in with mozpkgs;
       libreoffice
       libva-full
       libvdpau-va-gl
-      # meld
-      latest.firefox-nightly-bin
       mypaint
       mpv
       # mpv-with-scripts

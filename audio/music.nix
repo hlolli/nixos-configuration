@@ -13,7 +13,7 @@ with lib;
         faust2
         faust2csound
         faust2jack
-        reaper
+        # reaper
         qsynth
         zam-plugins
     ];

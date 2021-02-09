@@ -11,7 +11,7 @@ with lib;
       [
         pavucontrol
         pa_applet
-        pulseaudio-dlna
+        # pulseaudio-dlna
         libpulseaudio
       ];
   };

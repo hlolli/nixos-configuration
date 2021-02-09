@@ -1,9 +1,13 @@
 { config, lib, pkgs, ... }:
-{
+
+let dutree = pkgs.callPackage ./unpublished/dutree.nix {};
+
+in {
   config.environment.systemPackages = with pkgs; [
     bind
     cifs-utils
     convmv # <char-encoding fixer>
+    dutree
     encfs
     ethtool
     file

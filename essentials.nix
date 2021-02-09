@@ -19,6 +19,7 @@ in
       with pkgs; [
         ripcord # a discord client
         emacs
+        fd
         font-awesome-ttf
         filezilla
         franz # <social-media (delete?)>
@@ -27,7 +28,8 @@ in
         gcalcli # google-calendar cli
         go
         (google-chrome-dev.overrideAttrs (oldAttrs: rec {
-          rpath = makeLibraryPath [ pkgs.pipewire ] + ":" + oldAttrs.rpath;
+          rpath = makeLibraryPath [ pkgs.pipewire pkgs.xorg.libxshmfence ]
+                  + ":" + oldAttrs.rpath;
         }))
         gv
         imagemagick
@@ -41,6 +43,8 @@ in
         ruby
         shellcheck
         slack
+        steam
+        steam-run-native
         spotify
         supercollider
         texlive.combined.scheme-full
