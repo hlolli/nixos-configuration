@@ -10,19 +10,19 @@ let
       (interactive "r")
       (delete-region beg end)
       (yank))
-    
+
     (defun hlolli/indent-buffer ()
       "Indent the currently visited buffer."
       (interactive)
       (indent-region (point-min) (point-max)))
-    
+
     (defun hlolli/chomp (str)
       "Chomp leading and tailing whitespace from STR."
       (while (string-match "\\`\n+\\|^\\s-+\\|\\s-+$\\|\n+\\'"
                            str)
         (setq str (replace-match "" t t str)))
       str)
-    
+
     (defun hlolli/chomp-line-or-region ()
       "Remove leading and traling whitespace from current line or region."
       (interactive)
@@ -37,7 +37,7 @@ let
         (delete-region pos1 pos2)
         (goto-char pos1)
         (insert myStrChomped)))
-    
+
     (defun hlolli/echo-active-modes ()
       "Give a message of which minor modes are enabled in the current buffer."
       (interactive)
@@ -48,7 +48,7 @@ let
                                (error nil) ))
               minor-mode-list)
         (message "Active modes are %s" active-modes)))
-    
+
     (defun hlolli/rename-file-and-buffer ()
       "Rename the current buffer and file it is visiting."
       (interactive)
@@ -58,7 +58,7 @@ let
           (let ((new-name (read-file-name "New name: " filename)))
             (rename-file filename new-name t)
             (set-visited-file-name new-name t t)))))
-    
+
     (defun hlolli/delete-file-and-buffer ()
       "Kill the current buffer and deletes the file it is visiting."
       (interactive)
@@ -71,7 +71,7 @@ let
     	    (delete-file filename)
     	    (message "Deleted file %s" filename)
     	    (kill-buffer)))))))
-    
+
     (defun hlolli/move-file (new-location)
       "Write this file to NEW-LOCATION, and delete the old one."
       (interactive (list (expand-file-name
@@ -92,7 +92,7 @@ let
                    (file-exists-p new-location)
                    (not (string-equal old-location new-location)))
           (delete-file old-location))))
-    
+
     (defun hlolli/sudo-edit (&optional arg)
       "Edit currently visited file as root.
     With a prefix ARG prompt for a file to visit.
@@ -103,7 +103,7 @@ let
           (find-file (concat "/sudo:root@localhost:"
                              (ido-read-file-name "Find file(as root): ")))
         (find-alternate-file (concat "/sudo:root@localhost:" buffer-file-name))))
-    
+
     (defun hlolli/comment-or-uncomment-region-or-line ()
       "Comments or uncomments the region or the current line if there's no active region."
       (interactive)
@@ -112,27 +112,27 @@ let
             (setq beg (region-beginning) end (region-end))
           (setq beg (line-beginning-position) end (line-end-position)))
         (comment-or-uncomment-region beg end)))
-    
+
     ;; quickly move to the beginning or end of buffer
     (global-set-key (kbd "C->") #'beginning-of-buffer)
     (global-set-key (kbd "C-<") #'end-of-buffer)
     (global-set-key (kbd "C-x C->") #'beginning-of-buffer)
     (global-set-key (kbd "C-x C-<") #'end-of-buffer)
-    
-    
+
+
     ;; quickly move to beginning or end in terminal mode
     (global-unset-key (kbd "C-x <"))
     (global-unset-key (kbd "C-x >"))
     (global-set-key (kbd "C-x >") #'beginning-of-buffer)
     (global-set-key (kbd "C-x <") #'end-of-buffer)
-    
+
     ;; Comment or uncomment region
     (global-set-key (kbd "C-;") 'hlolli/comment-or-uncomment-region-or-line)
-    
+
     ;; Comment or uncomment region - terminal mode
     (global-unset-key (kbd "C-x ;"))
     (global-set-key (kbd "C-x ;") 'hlolli/comment-or-uncomment-region-or-line)
-    
+
     ;; Disable annoying ctrl-z freeze
     (global-unset-key (kbd "C-z"))
 
@@ -151,38 +151,38 @@ let
                            (magit-current-file)
                            (count-lines 1 (point)))))
         (kill-new link)))
-    
+
     (defun camel-to-snake-case-region ()
       (interactive)
       (progn (replace-regexp "\\([A-Z]\\)" "_\\1" nil (region-beginning) (region-end))
              (downcase-region (region-beginning) (region-end))))
-    
+
     (defun stop-using-minibuffer ()
       "kill the minibuffer"
       (when (and (>= (recursion-depth) 1) (active-minibuffer-window))
         (abort-recursive-edit)))
-    
+
     (add-hook 'mouse-leave-buffer-hook 'stop-using-minibuffer)
-    
+
     (defun hlolli/disable-scroll-bars (frame)
       (modify-frame-parameters frame
                                '((vertical-scroll-bars . nil)
                                  (horizontal-scroll-bars . nil))))
-    
+
     (add-hook 'after-make-frame-functions 'hlolli/disable-scroll-bars)
-    
+
     (defun hlolli/delete-trailing-whitespace ()
       "Delete trailing whitespace except in modes where it
       makes little sense"
       (when (not (and (eq 'string (type-of (buffer-file-name)))
                       (string-match-p ".*\.md$" (buffer-file-name))))
         (delete-trailing-whitespace)))
-    
+
     ;; Delete trailing whitespace on save
-    (add-hook 'before-save-hook #'hlolli/delete-trailing-whitespace nil nil)        
+    (add-hook 'before-save-hook #'hlolli/delete-trailing-whitespace nil nil)
   '';
-    
-  ido-config = '' 
+
+  ido-config = ''
     (ido-mode t)
     (setq ido-everywhere            t
           ido-enable-prefix         nil
@@ -195,23 +195,23 @@ let
           ;; ido-handle-duplicate-virtual-buffers 2
           ido-default-buffer-method 'selected-window
           ido-default-file-method   'selected-window)
-    
+
     (defun ido-my-keys ()
       (define-key ido-completion-map (kbd "<up>")   'ido-prev-match)
       (define-key ido-completion-map (kbd "<down>") 'ido-next-match))
-    
+
     (add-hook 'ido-setup-hook 'ido-my-keys)
-    
+
     (add-hook 'ido-make-file-list-hook
               (lambda ()
                 (define-key ido-file-dir-completion-map (kbd "SPC") 'self-insert-command)))
-    
+
     (setq ido-decorations (quote ("\n-> " "" "\n " "\n ..." "[" "]" "
       [No match]" " [Matched]" " [Not readable]" " [Too big]" "
       [Confirm]")))
     (defun ido-disable-line-truncation () (set (make-local-variable 'truncate-lines) nil))
     (add-hook 'ido-minibuffer-setup-hook 'ido-disable-line-truncation)
-    
+
     (defun recentf-ido-find-file ()
         "Find a recent file using Ido."
         (interactive)
@@ -230,8 +230,8 @@ let
           (when filename
             (find-file (cdr (assoc filename
                                    file-assoc-list))))))
-    
-    (define-key ido-file-completion-map (kbd "C-w") 'ido-delete-backward-updir)    
+
+    (define-key ido-file-completion-map (kbd "C-w") 'ido-delete-backward-updir)
   '';
   emacs-config = pkgs.writeText "default.el" ''
       ;; initialize package
@@ -244,7 +244,7 @@ let
 
 
       ;; copy fish shell path into the path.
-      (let ((path-from-shell (shell-command-to-string 
+      (let ((path-from-shell (shell-command-to-string
         "/run/current-system/sw/bin/fish -i -c \"echo -n \\$PATH[1]; for val in \\$PATH[2..-1];echo -n \\\":\\$val\\\";end\"")))
         (setenv "PATH" path-from-shell)
         (setq exec-path (split-string path-from-shell ":")))
@@ -351,13 +351,13 @@ let
        (add-to-list 'solaire-mode-themes-to-face-swap '"vscode-dark-plus")
        (setq solaire-mode-auto-swap-bg t)
        (solaire-global-mode +1))
-      
+
      (use-package vscode-dark-plus-theme
        :defer
        :after solaire-mode
        :config
        (load-theme 'vscode-dark-plus t))
-    
+
      (use-package web-mode :defer
        :mode  (("\\.json$" . web-mode)
                ("\\.css$" . web-mode)
@@ -366,7 +366,7 @@ let
                ("\\.html$" . web-mode)
                ("\\.php$" . web-mode)
                (".*babelrc.*" . web-mode)))
-    
+
       (use-package js-mode :defer
         :init
         (setq js2-strict-inconsistent-return-warning nil
@@ -443,6 +443,8 @@ let
       (global-set-key (kbd "M-x") 'smex)
 
       (add-hook 'after-init-hook #'global-prettier-mode)
+
+      (global-undo-tree-mode)
 
       ${ido-config}
 

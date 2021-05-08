@@ -1,0 +1,5 @@
+{:main [{:des "swap left-fn with left-ctrl" :rules [[:##fn :left_control]]}
+        {:des "swap left-ctrl with left-fn" :rules [[:##left_control :fn]]}
+        {:des "swap right command with right option" :rules [[:##right_command :right_option]]}
+        {:des "swap right option with right command" :rules [[:##right_option :right_command]]}
+        {:des "don't quit from right cmd+q but make @ sign" :rules [[:!Qq :!Oq]]}]}
