@@ -468,6 +468,7 @@ in {
       notmuch
       ox-reveal
       prettier
+      iter2 nvm
       rainbow-delimiters
       smartparens
       smex
@@ -475,6 +476,8 @@ in {
       use-package
       vscode-dark-plus-theme
       web-mode
+    ]) ++ (with epkgs.elpaPackages; [
+      undo-tree
     ])
   );
 }

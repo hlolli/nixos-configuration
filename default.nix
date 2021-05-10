@@ -12,6 +12,8 @@ let myEmacs = (pkgs.callPackage ./emacs.nix {}).emacs;
       inherit (pkgs.darwin.apple_sdk.frameworks) Foundation;
     };
 
+    signal-desktop = pkgs.callPackage ./signal.nix { };
+
 in {
 
   nixpkgs.config.allowUnfree = true;
@@ -20,12 +22,14 @@ in {
   environment.systemPackages =
     [
       clj2nix
-      pkgs.vim
-      pkgs.slack
+      pkgs.direnv
+      pkgs.gnupg
       pkgs.git
       pkgs.nodejs
+      signal-desktop
+      pkgs.slack
+      pkgs.vim
       pkgs.yarn
-      pkgs.direnv
       myEmacs
       goku
       # pkgs.yabai
@@ -66,6 +70,9 @@ in {
     '';
   };
 
+  programs.gnupg = {
+    agent.enable = true;
+  };
   # Used for backwards compatibility, please read the changelog before changing.
   # $ darwin-rebuild changelog
   system.stateVersion = 4;
