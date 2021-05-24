@@ -1,6 +1,10 @@
-{ config, pkgs, ... }:
+{ stdenv, config, pkgs, lib, ... }:
 
-let myEmacs = (pkgs.callPackage ./emacs.nix {}).emacs;
+let nodejs = pkgs.nodejs-15_x;
+    nodePackages = lib.dontRecurseIntoAttrs (pkgs.callPackage ./node-packages/default.nix {
+      inherit nodejs;
+    });
+    myEmacs = (pkgs.callPackage ./emacs.nix {}).emacs;
     clj2nix = pkgs.callPackage (pkgs.fetchFromGitHub {
       owner = "hlolli";
       repo = "clj2nix";
@@ -14,30 +18,65 @@ let myEmacs = (pkgs.callPackage ./emacs.nix {}).emacs;
 
     signal-desktop = pkgs.callPackage ./signal.nix { };
 
+    solc = pkgs.callPackage ./fixes/solc.nix { };
+
+    pkgsWithAwscli2Fix = import (pkgs.fetchFromGitHub {
+      owner = "NixOS";
+      repo = "nixpkgs";
+      rev = "f00c849d580677d9b49948e2cb2f47ab43a95f30";
+      sha256 = "0pz93a67qazgfhj13wyy1giq22s7s2l36505y4dm0li2h0948359";
+    }) {};
+
+    mix2nixPr = import (pkgs.fetchFromGitHub {
+      owner = "NixOS";
+      repo = "nixpkgs";
+      rev = "5e06ef33447aedfb1f355770d8310643c70d8f42";
+      sha256 = "1hf2fqb7d5gk15w2ycajc9vph0ihdd2c7aal4hvh9lsm423f1jm2";
+    }) {};
+
+    rebar2nixPr = import (pkgs.fetchFromGitHub {
+      owner = "NixOS";
+      repo = "nixpkgs";
+      rev = "91f3dea4feb562d75ff0b0b77c2aa95543a845bf";
+      sha256 = "0gjsrqi67hqkj6fcl3j1j06sl42nxinv5k8hcmp1dxbbq73makdq";
+    }) {};
+
 in {
 
   nixpkgs.config.allowUnfree = true;
   # List packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
   environment.systemPackages =
-    [
+    with pkgs; [
       clj2nix
-      pkgs.direnv
-      pkgs.gnupg
-      pkgs.git
-      pkgs.nodejs
+      direnv
+      gnupg
+      git
       signal-desktop
-      pkgs.slack
-      pkgs.vim
-      pkgs.yarn
+      slack
+      vim
+      wget
+      watchman
+      nodejs
+      (yarn.override { inherit nodejs; })
       myEmacs
       goku
+      pkgsWithAwscli2Fix.awscli2
+      mix2nixPr.mix2nix
+      rebar2nixPr.beamPackages.rebar3-nix
+      solc
+      nodePackages."@crowdin/cli"
+      # pkgs.awscli2
+      # pkgs.nixops
+      # pkgs.nixops-aws
       # pkgs.yabai
       # pkgs.iterm2
-    ];
+    ]; # ++ (builtins.attrValues nodePackages);
 
   environment.variables.SHELL = "${pkgs.fish}/bin/fish";
   environment.variables.GOKU_EDN_CONFIG_FILE = "${./keybindings.edn}";
+
+  # programs.direnv.enableNixDirenvIntegration = true;
 
   services.lorri = {
     enable = true;

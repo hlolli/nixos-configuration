@@ -1,8 +1,14 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 let
   emacs-base = pkgs.emacs;
   withpkgs = (pkgs.emacsPackagesGen emacs-base).emacsWithPackages;
+  runtime-pkgs = lib.strings.concatMapStrings (x: ":" + x + "/bin") (
+    with pkgs; [
+      git
+      python39Packages.cfn-lint
+    ]
+  );
 
   keybindings-and-extra = ''
     ;; replace the selected region with yank
@@ -248,7 +254,7 @@ let
         "/run/current-system/sw/bin/fish -i -c \"echo -n \\$PATH[1]; for val in \\$PATH[2..-1];echo -n \\\":\\$val\\\";end\"")))
         (setenv "PATH" path-from-shell)
         (setq exec-path (split-string path-from-shell ":")))
-      (setenv "PATH" (concat (getenv "PATH") ":/run/current-system/sw/bin:~/.npm-global/bin"))
+      (setenv "PATH" (concat (getenv "PATH") ":/run/current-system/sw/bin:~/.npm-global/bin${runtime-pkgs}"))
       (setenv "NODE_PATH" "~/.npm-global/lib/node_modules")
 
       (setq auto-save-list-file-prefix (concat user-emacs-directory "tmp/auto-save-list/.saves-")
@@ -352,6 +358,10 @@ let
        (setq solaire-mode-auto-swap-bg t)
        (solaire-global-mode +1))
 
+     (use-package solidity-mode
+       :defer
+     )
+
      (use-package vscode-dark-plus-theme
        :defer
        :after solaire-mode
@@ -367,7 +377,7 @@ let
                ("\\.php$" . web-mode)
                (".*babelrc.*" . web-mode)))
 
-      (use-package js-mode :defer
+     (use-package js-mode :defer
         :init
         (setq js2-strict-inconsistent-return-warning nil
               js2-strict-cond-assign-warning nil
@@ -382,6 +392,8 @@ let
         :mode (
                ("\\.ts$" . js-mode)
                ("\\.tsx$" . js-mode)
+               ("\\.ts$" . typescript-mode)
+               ("\\.tsx$" . typescript-mode)
                ("\\.js$" . js-mode)
                ("\\.jsx$" . js-mode)
          ))
@@ -397,6 +409,8 @@ let
 
               ;; (color-identifiers-mode t)
               ;; (color-identifiers:regenerate-colors)
+
+      (add-to-list 'magic-mode-alist '("\\(---\n\\)?AWSTemplateFormatVersion:" . cfn-mode))
 
       ;; Disable blinking cursor
       (blink-cursor-mode 0)
@@ -446,6 +460,10 @@ let
 
       (global-undo-tree-mode)
 
+      (global-eldoc-mode)
+
+      (global-company-mode)
+
       ${ido-config}
 
       ${keybindings-and-extra}
@@ -472,11 +490,16 @@ in {
       rainbow-delimiters
       smartparens
       smex
+      typescript-mode
+      tide
       solaire-mode
+      solidity-mode
       use-package
       vscode-dark-plus-theme
       web-mode
-    ]) ++ (with epkgs.elpaPackages; [
+      yaml-mode
+      cfn-mode
+  ]) ++ (with epkgs.elpaPackages; [
       undo-tree
     ])
   );
