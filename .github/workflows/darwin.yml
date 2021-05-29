@@ -15,5 +15,4 @@ jobs:
         with:
           name: darwin-configuration
           signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
-      - run: sh ./cache.sh
-        with: NIXPKGS_ALLOW_UNFREE=1
+      - run: NIXPKGS_ALLOW_UNFREE=1 sh ./cache.sh
