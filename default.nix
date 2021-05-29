@@ -1,6 +1,6 @@
 { stdenv, config, pkgs, lib, ... }:
 
-let nodejs = pkgs.nodejs-15_x;
+let nodejs = pkgs.nodejs-16_x;
     nodePackages = lib.dontRecurseIntoAttrs (pkgs.callPackage ./node-packages/default.nix {
       inherit nodejs;
     });
@@ -41,9 +41,23 @@ let nodejs = pkgs.nodejs-15_x;
       sha256 = "0gjsrqi67hqkj6fcl3j1j06sl42nxinv5k8hcmp1dxbbq73makdq";
     }) {};
 
+    nixUnstable = import (pkgs.fetchFromGitHub {
+      owner = "NixOS";
+      repo = "nix";
+      rev = "b10256af51dfa929e8f916414d6f021dd45f2e1e";
+      sha256 = pkgs.lib.fakeSha256;
+    }) {};
+
 in {
 
   nixpkgs.config.allowUnfree = true;
+
+  nixpkgs.overlays = [(
+    self: super: {
+      inherit nixUnstable;
+    }
+  )];
+
   # List packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
   environment.systemPackages =
@@ -52,6 +66,7 @@ in {
       direnv
       gnupg
       git
+      gitflow
       signal-desktop
       slack
       vim

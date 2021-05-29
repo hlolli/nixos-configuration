@@ -24,7 +24,7 @@ let
       spellLangComponents = splitString "_" spellcheckerLanguage;
       hunspellDict = elemAt spellLangComponents 0 + "-" + toLower (elemAt spellLangComponents 1);
     in if spellcheckerLanguage != null
-      then ''
+       then ''
         --set HUNSPELL_DICTIONARIES "${hunspellDicts.${hunspellDict}}/share/hunspell" \
         --set LC_MESSAGES "${spellcheckerLanguage}"''
        else "");
@@ -152,11 +152,11 @@ let
     runHook postInstall
   '';
 
-  preFixup = ''
+    preFixup = ''
     gappsWrapperArgs+=(
       --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath [ stdenv.cc.cc ] }"
       ${customLanguageWrapperArgs}
-    )
+                   )
 
     # Fix the desktop link
     substituteInPlace $out/share/applications/signal-desktop.desktop \
@@ -184,5 +184,5 @@ let
   };
 
 in if stdenv.isDarwin
-  then darwin
-  else linux
+   then darwin
+   else linux

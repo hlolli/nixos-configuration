@@ -396,6 +396,7 @@ let
                ("\\.tsx$" . typescript-mode)
                ("\\.js$" . js-mode)
                ("\\.jsx$" . js-mode)
+               ("\\.mjs$" . js-mode)
          ))
 
       (add-hook 'js-mode-hook
