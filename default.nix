@@ -123,7 +123,18 @@ in {
     requireSignedBinaryCaches = true;
     extraOptions = ''
       experimental-features = nix-command flakes ca-references
+      extra-platforms = x86_64-linux
     '';
+
+    # https://medium.com/@zw3rk/provisioning-a-nixos-server-from-macos-d36055afc4ad
+    distributedBuilds = true;
+    buildMachines = [ {
+      hostName = "nix-docker";
+      sshUser = "root";
+      sshKey = "/etc/nix/docker_rsa";
+      systems = [ "x86_64-linux" ];
+      maxJobs = 2;
+    }];
   };
 
   services.nix-daemon = {
