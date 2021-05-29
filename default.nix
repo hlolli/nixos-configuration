@@ -1,6 +1,7 @@
-{ stdenv, config, pkgs, lib, ... }:
+{ stdenv, config, pkgs, ... }:
 
-let nodejs = pkgs.nodejs-16_x;
+let lib = pkgs.lib;
+    nodejs = pkgs.nodejs-16_x;
     nodePackages = lib.dontRecurseIntoAttrs (pkgs.callPackage ./node-packages/default.nix {
       inherit nodejs;
     });
@@ -16,7 +17,7 @@ let nodejs = pkgs.nodejs-16_x;
       inherit (pkgs.darwin.apple_sdk.frameworks) Foundation;
     };
 
-    signal-desktop = pkgs.callPackage ./signal.nix { };
+    signal-desktop = pkgs.callPackage ./signal.nix { inherit lib; };
 
     solc = pkgs.callPackage ./fixes/solc.nix { };
 
@@ -41,12 +42,12 @@ let nodejs = pkgs.nodejs-16_x;
       sha256 = "0gjsrqi67hqkj6fcl3j1j06sl42nxinv5k8hcmp1dxbbq73makdq";
     }) {};
 
-    nixUnstable = import (pkgs.fetchFromGitHub {
+    nixUnstableSrc = pkgs.fetchFromGitHub {
       owner = "NixOS";
       repo = "nix";
       rev = "b10256af51dfa929e8f916414d6f021dd45f2e1e";
-      sha256 = pkgs.lib.fakeSha256;
-    }) {};
+      sha256 = "sha256:1r6d5y17v5v8mmjva82vgybvhg0s8024qns8irwnbnrbb5nxszgd";
+    };
 
 in {
 
@@ -54,7 +55,16 @@ in {
 
   nixpkgs.overlays = [(
     self: super: {
-      inherit nixUnstable;
+      nixUnstable = super.nixUnstable.overrideAttrs (o: {
+        src = nixUnstableSrc;
+        patchPhase = "true";
+        buildInputs = o.buildInputs ++ [ super.nlohmann_json ];
+      });
+      nix = super.nixUnstable.overrideAttrs (o: {
+        src = nixUnstableSrc;
+        patchPhase = "true";
+        buildInputs = o.buildInputs ++ [ super.nlohmann_json ];
+      });
     }
   )];
 
@@ -62,24 +72,26 @@ in {
   # $ nix-env -qaP | grep wget
   environment.systemPackages =
     with pkgs; [
+      # cachix
       clj2nix
       direnv
-      gnupg
       git
       gitflow
+      gnupg
+      nixUnstable
+      nodejs
       signal-desktop
       slack
       vim
-      wget
       watchman
-      nodejs
-      (yarn.override { inherit nodejs; })
+      wget
+
       myEmacs
       goku
       pkgsWithAwscli2Fix.awscli2
       mix2nixPr.mix2nix
       rebar2nixPr.beamPackages.rebar3-nix
-      solc
+      (yarn.override { inherit nodejs; })
       nodePackages."@crowdin/cli"
       # pkgs.awscli2
       # pkgs.nixops
@@ -127,6 +139,11 @@ in {
   programs.gnupg = {
     agent.enable = true;
   };
+
+  imports = [
+    ./virtualization.nix
+  ];
+
   # Used for backwards compatibility, please read the changelog before changing.
   # $ darwin-rebuild changelog
   system.stateVersion = 4;

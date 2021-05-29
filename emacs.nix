@@ -1,6 +1,7 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, ... }:
 
 let
+  lib = pkgs.lib;
   emacs-base = pkgs.emacs;
   withpkgs = (pkgs.emacsPackagesGen emacs-base).emacsWithPackages;
   runtime-pkgs = lib.strings.concatMapStrings (x: ":" + x + "/bin") (
