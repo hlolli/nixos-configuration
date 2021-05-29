@@ -1,7 +1,8 @@
 name: "darwin-configuration"
 on:
-  pull_request:
   push:
+  schedule:
+    - cron: "0 0 * * *"
 jobs:
   tests:
     runs-on: macos-latest
@@ -15,3 +16,4 @@ jobs:
           name: darwin-configuration
           signingKey: "${{ secrets.CACHIX_SIGNING_KEY }}"
       - run: sh ./cache.sh
+        with: NIXPKGS_ALLOW_UNFREE=1
