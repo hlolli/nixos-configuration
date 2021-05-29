@@ -103,7 +103,32 @@ in {
   environment.variables.SHELL = "${pkgs.fish}/bin/fish";
   environment.variables.GOKU_EDN_CONFIG_FILE = "${./keybindings.edn}";
 
+  # Auto upgrade nix package and the daemon service.
   # programs.direnv.enableNixDirenvIntegration = true;
+
+  nix = {
+    buildCores = 8;
+    useDaemon = true;
+    useSandbox = true;
+    trustedUsers = [ "hlodversigurdsson" ];
+    binaryCaches = [
+      "https://darwin-configuration.cachix.org/"
+      "https://cache.nixos.org/"
+    ];
+    binaryCachePublicKeys = [
+      "hydra.nixos.org-1:CNHJZBh9K4tP3EKF6FkkgeVYsS3ohTl+oS0Qa8bezVs="
+      "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      "darwin-configuration.cachix.org-1:ysPLcM9Haaufad13Bc0x+UGj3xZhE9lP8fwp8hjjspU="
+    ];
+    requireSignedBinaryCaches = true;
+    extraOptions = ''
+      experimental-features = nix-command flakes ca-references
+    '';
+  };
+
+  services.nix-daemon = {
+    enable = true;
+  };
 
   services.lorri = {
     enable = true;
