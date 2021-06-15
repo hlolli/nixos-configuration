@@ -5,3 +5,6 @@
 nixpkgs
 private
 result
+node_modules
+**/node_modules
+henda

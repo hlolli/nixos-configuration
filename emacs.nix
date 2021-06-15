@@ -1,8 +1,17 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 let
-  lib = pkgs.lib;
-  emacs-base = pkgs.emacs;
+  emacs-base = (import (pkgs.fetchFromGitHub {
+    owner = "NixOS";
+    repo = "nixpkgs";
+    rev = "ef3a770fd43ab5e1b78ca7dd6b2a195c370befac";
+    sha256 = "sha256-D3NDtJbvyqsw+Sd2Y40LNBK/zv250FuTyFBq8zQM6vU=";
+  }) { localSystem = "aarch64-darwin"; }).emacs;
+  # emacs-base = pkgs.emacs.overrideAttrs(o: {
+  #   preConfigure = lib.optionalString (pkgs.stdenv.isDarwin && pkgs.stdenv.isAarch64) ''
+  #     sed -i 's/^DO_CODESIGN=.*/DO_CODESIGN=yes/' src/Makefile.in
+  # '';
+  # });
   withpkgs = (pkgs.emacsPackagesGen emacs-base).emacsWithPackages;
   runtime-pkgs = lib.strings.concatMapStrings (x: ":" + x + "/bin") (
     with pkgs; [
@@ -11,6 +20,12 @@ let
     ]
   );
 
+  text-layout = ''
+    (set-face-attribute 'default nil
+                        :font default-font
+                        :height 140
+                        :weight 'regular)
+   '';
   keybindings-and-extra = ''
     ;; replace the selected region with yank
     (defun hlolli/yank-replace (beg end)
@@ -256,7 +271,7 @@ let
         (setenv "PATH" path-from-shell)
         (setq exec-path (split-string path-from-shell ":")))
       (setenv "PATH" (concat (getenv "PATH") ":/run/current-system/sw/bin:~/.npm-global/bin${runtime-pkgs}"))
-      (setenv "NODE_PATH" "~/.npm-global/lib/node_modules")
+      (setenv "NODE_PATH" "~/.yarn/bin:~/.npm-global/lib/node_modules")
 
       (setq auto-save-list-file-prefix (concat user-emacs-directory "tmp/auto-save-list/.saves-")
             custom-file (concat user-emacs-directory "tmp/custom.el")

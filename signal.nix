@@ -32,10 +32,14 @@ let
   x86_64-darwin-version = "5.0.0";
   x86_64-darwin-sha256 = "09ag5mmpx7vqz5dg2fd89sgj6y89q4kin7rnn5zjsbyig6m6xp0y";
 
+  aarch64-darwin-version = "5.3.0";
+  aarch64-darwin-sha256 = lib.fakeSha256;
+
   x86_64-linux-version = "5.0.0";
   x86_64-linux-sha256 = "17hxg61m9kk1kph6ifqy6507kzx5hi6yafr2mj8n0a6c39vc8f9g";
 
   version = {
+    aarch64-darwin = aarch64-darwin-version;
     x86_64-darwin = x86_64-darwin-version;
     x86_64-linux = x86_64-linux-version;
   }.${system} or throwSystem;
