@@ -411,6 +411,7 @@ let
                ("\\.ts$" . typescript-mode)
                ("\\.tsx$" . typescript-mode)
                ("\\.js$" . js-mode)
+               ("\\.esm$" . js-mode)
                ("\\.jsx$" . js-mode)
                ("\\.mjs$" . js-mode)
          ))
@@ -499,6 +500,7 @@ in {
       highlight-symbol
       js2-mode
       magit
+      go-mode
       nix-mode
       notmuch
       ox-reveal
@@ -511,6 +513,8 @@ in {
       tide
       solaire-mode
       solidity-mode
+      terraform-doc
+      terraform-mode
       use-package
       vscode-dark-plus-theme
       web-mode

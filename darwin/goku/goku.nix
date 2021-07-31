@@ -1,15 +1,15 @@
-{ lib, stdenv, pkgs, fetchFromGitHub, graalvm, clojure, joker,
-  watchexec, runtimeShell, Foundation, zlib }:
+{ lib, stdenv, pkgs, fetchFromGitHub, clojure, joker,
+  watchexec, runtimeShell, Foundation, zlib, makeWrapper, ... }:
 
 let cljdeps = import ./goku.deps.nix { inherit pkgs; };
     classp = cljdeps.makeClasspaths {};
-    clojureGraal = clojure.override { jdk = graalvm; };
+    # clojureGraal = clojure.override { jdk = graalvm; };
 
 in stdenv.mkDerivation rec {
   name = "goku";
   version = "0.3.11";
 
-  buildInputs = [ clojureGraal Foundation zlib ];
+  buildInputs = [ clojure Foundation zlib makeWrapper ];
 
   src = fetchFromGitHub {
     owner = "yqrashawn";
@@ -27,15 +27,16 @@ in stdenv.mkDerivation rec {
     HOME=$(pwd) \
     clojure \
       -Scp 'src:${classp}' \
-      -m clj.native-image karabiner-configurator.core \
-      --initialize-at-build-time \
-      --report-unsupported-elements-at-runtime \
-      -H:-CheckToolchain -H:+ReportExceptionStackTraces
+      -M src/karabiner_configurator/core.clj
   '';
 
   installPhase = ''
     mkdir -p $out/bin
-    cp karabiner_configurator.core $out/bin/goku
+    mkdir -p $out/lib/goku
+    cp -R ./* $out/lib/goku
+    makeWrapper ${clojure}/bin/clojure $out/bin/goku \
+      --add-flags "-Scp $out/lib/goku/src:${classp} -m karabiner-configurator.core"
+
     # https://github.com/yqrashawn/GokuRakuJoudo/blob/a9016fe1ffd700365b1929a87a15c90132903640/.github/workflows/build-and-release.yaml#L34-L38
     touch $out/bin/gokuw
     echo "#!${runtimeShell}" >> $out/bin/gokuw
@@ -44,7 +45,7 @@ in stdenv.mkDerivation rec {
     chmod +x $out/bin/gokuw
   '';
 
-  meta = with lib; {
+  meta = with pkgs.lib; {
     description = "Karabiner configurator";
     homepage = "https://github.com/yqrashawn/GokuRakuJoudo";
     license = licenses.gpl3;

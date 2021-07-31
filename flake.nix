@@ -5,7 +5,7 @@
     nixpkgs.url = "github:hlolli/nixpkgs";
     nixUnstable.url = "github:nixos/nix";
     nixUnstable.inputs.nixpkgs.follows = "nixpkgs";
-    darwin.url = "github:hlolli/nix-darwin";
+    darwin.url = "github:LnL7/nix-darwin";
     darwin.inputs.nixpkgs.follows = "nixpkgs";
     flake-compat = {
       url = "github:edolstra/flake-compat";
@@ -24,6 +24,8 @@
         inputs = { inherit nixUnstable nixpkgs slackpr; darwin = self; system = "aarch64-darwin"; };
         modules = [ darwin.darwinModules.flakeOverrides darwinBase ];
       } // { inherit nixpkgs; currentSystem = "aarch64-darwin"; };
+
+       # packages.aarch64-darwin.goku = self.darwinConfigurations."Hlodvers-MacBook-Air".system.config.goku;
 
     };
 }

@@ -1,5 +1,16 @@
-{:main [{:des "swap left-fn with left-ctrl" :rules [[:##fn :left_control]]}
-        {:des "swap left-ctrl with left-fn" :rules [[:##left_control :fn]]}
-        {:des "swap right command with right option" :rules [[:##right_command :right_option]]}
-        {:des "swap right option with right command" :rules [[:##right_option :right_command]]}
-        {:des "don't quit from right cmd+q but make @ sign" :rules [[:!Qq :!Oq]]}]}
+{
+ :devices {:g915 [{:vendor_id 1133 :product_id 49982}]}
+ :froms {:1 {:apple_vendor_top_case_key_code :keyboard_fn}}
+ :main [{:des "swap left-fn with left-ctrl" :rules [[:##fn :left_control :!g915]]}
+        {:des "swap left-ctrl with left-fn" :rules [[:##left_control :fn :!g915]]}
+        {:des "swap right command with right option" :rules [[:##right_command :right_option :!g915]]}
+        {:des "swap right option with right command" :rules [[:##right_option :right_command :!g915]]}
+        {:des "don't quit from right cmd+q but make @ sign" :rules [[:!Qq :!Oq]]}
+        {:des "logitech_left_ctrl" :rules [:1 :C :g915]}
+        {:des "logitech_left_cmd" :rules [[:###left_option :left_command :g915]]}
+        {:des "logitech_left_option" :rules [[:###left_command :left_option :g915]]}
+        {:des "logitech_tilde_accent" :rules [[:###grave_accent_and_tilde :non_us_backslash :g915]
+                                              [:###non_us_backslash :grave_accent_and_tilde :g915]]}
+        ;; {:des "Disable alt+spacebar (nonbreaking space)" :rules[[]]}
+        ]
+ }

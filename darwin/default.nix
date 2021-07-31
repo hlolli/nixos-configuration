@@ -17,13 +17,25 @@ let
     config = { allowUnfree = true; };
     overlays = darwinOverlays;
   };
-
+  goku = pkgs.callPackage ./goku/goku.nix (pkgs // {inherit (pkgs.darwin.apple_sdk.frameworks) Foundation;});
   docker = (pkgs.docker.override { buildxSupport = true; });
-
+  vault_ = pkgs.vault.overrideAttrs (oldAttrs: {
+    src = pkgs.fetchFromGitHub {
+      owner = "hashicorp";
+      repo = "vault";
+      rev = "v1.7.3";
+      sha256 = "sha256-BO4xzZrX9eVETQWjBDBfP7TlD7sO+gLgbB330A11KAI=";
+    };
+    preBuild = ''
+      substituteInPlace go/src/github.com/hashicorp/vault/vendor/github.com/shirou/gopsutil/cpu/cpu_darwin_cgo.go \
+        --replace TARGET_OS_MAC 1
+    '';
+  });
   slack = (import slackpr { inherit system; config = { allowUnfree = true; }; }).slack;
   emacs = (pkgs.callPackage ../emacs.nix {}).emacs;
   # signal-desktop = pkgs.callPackage ./signal.nix { inherit lib; };
 in {
+  
   config = {
 
     nix = {
@@ -49,27 +61,33 @@ in {
     '';
 
       # https://medium.com/@zw3rk/provisioning-a-nixos-server-from-macos-d36055afc4ad
-      distributedBuilds = true;
-      buildMachines = [ {
-        hostName = "95.216.170.8";
-        sshUser = "hlolli-cloud";
-        sshKey = "/Users/hlodversigurdsson/.ssh/id_rsa.pub";
-        systems = [ "x86_64-linux" ];
-        maxJobs = 2;
-      }];
+      # distributedBuilds = true;
+      # buildMachines = [ {
+      #   hostName = "95.216.170.8";
+      #   sshUser = "hlolli-cloud";
+      #   sshKey = "/Users/hlodversigurdsson/.ssh/id_rsa.pub";
+      #   systems = [ "x86_64-linux" ];
+      #   maxJobs = 2;
+      # }];
     };
 
     environment.systemPackages =
       [ emacs ] ++ ( with pkgs; [
+        # awscli2
         (docker.override { buildxSupport = true; })
         direnv
         git
         gitflow
         gnupg
+        goku
+        hcloud
+        jq
         nixos-shell
         nodejs
         podman
         slack
+        tree
+        vault_
         vim
         yarn
         qemu
@@ -78,6 +96,7 @@ in {
       ]);
 
     environment.variables = {
+      GOKU = "${goku}";
       GOKU_EDN_CONFIG_FILE = "${./keybindings.edn}";
       ARCHFLAGS="-arch arm64";
       SHELL = "${pkgs.fish}/bin/fish";
