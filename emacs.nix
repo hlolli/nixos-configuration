@@ -7,6 +7,12 @@ let
     rev = "ef3a770fd43ab5e1b78ca7dd6b2a195c370befac";
     sha256 = "sha256-D3NDtJbvyqsw+Sd2Y40LNBK/zv250FuTyFBq8zQM6vU=";
   }) { localSystem = "aarch64-darwin"; }).emacs;
+  jsnixPkgs = import ./javascript/package-lock.nix pkgs;
+  prettyCtrlL = pkgs.fetchurl {
+    url = "https://raw.githubusercontent.com/jsyjr/pp-c-l/961353ead656a4961f91dd6a0d7b9df925e29869/pp-c-l.el";
+    sha256 = "sha256-rV6iRiCfp2qwT1YbIgsLizfhIWlEOvPkMCEcJSlqsA4=";
+  };
+    #
   # emacs-base = pkgs.emacs.overrideAttrs(o: {
   #   preConfigure = lib.optionalString (pkgs.stdenv.isDarwin && pkgs.stdenv.isAarch64) ''
   #     sed -i 's/^DO_CODESIGN=.*/DO_CODESIGN=yes/' src/Makefile.in
@@ -211,9 +217,9 @@ let
           ido-enable-flex-matching  t
           ido-auto-merge-work-directories-length nil
           ;;ido-use-filename-at-point t
-          ido-max-prospects         10
+          ido-max-prospects         1000
           ido-create-new-buffer     'always
-          ;; ido-use-virtual-buffers   t
+          ido-use-virtual-buffers   t
           ;; ido-handle-duplicate-virtual-buffers 2
           ido-default-buffer-method 'selected-window
           ido-default-file-method   'selected-window)
@@ -254,7 +260,32 @@ let
                                    file-assoc-list))))))
 
     (define-key ido-file-completion-map (kbd "C-w") 'ido-delete-backward-updir)
+
+    (defvar ido-dont-ignore-buffer-names '("*Messages*" "*Scratch*" "*scratch*"))
+
+    (defun ido-ignore-most-star-buffers (name)
+      (and
+        (string-match-p "^*" name)
+        (not (member name ido-dont-ignore-buffer-names))))
+
+    (setq ido-ignore-buffers (list "\\` " #'ido-ignore-most-star-buffers))
+
+    (defun ido-yank ()
+      (interactive)
+      (let ((path (current-kill 0)))
+        (if (file-exists-p path)
+            (progn
+              (let ((dir (file-name-directory path)))
+                (if dir (ido-set-current-directory dir)))
+              (setq ido-exit 'refresh)
+              (setq ido-text-init (if (file-directory-p path) nil (file-name-nondirectory path)))
+              (setq ido-rotate-temp t)
+              (exit-minibuffer))
+          (yank))))
+
+    (define-key ido-file-dir-completion-map (kbd "C-y") 'ido-yank)
   '';
+
   emacs-config = pkgs.writeText "default.el" ''
       ;; initialize package
 
@@ -262,8 +293,8 @@ let
       (package-initialize 'noactivate)
       (eval-when-compile
         (require 'use-package))
-      (load-theme 'vscode-dark-plus t)
-
+      (load-theme 'dracula t)
+      (setq dracula-alternate-mode-line-and-minibuffer t)
 
       ;; copy fish shell path into the path.
       (let ((path-from-shell (shell-command-to-string
@@ -279,10 +310,12 @@ let
             create-lockfiles nil
             completion-show-inline-help nil
             completion-auto-help nil
+            display-time-format "%HH:%MM:SS"
             electric-indent-mode t
             gc-cons-threshold 20000000
             help-window-select t
             inhibit-startup-message t
+	          max-lisp-eval-depth 10000
             nrepl-use-ssh-fallback-for-remote-hosts t
             nxml-child-indent 4
             nxml-attribute-indent 4
@@ -297,7 +330,11 @@ let
             use-package-check-before-init t
             left-fringe-width 2
             column-number-indicator-zero-based nil
-            right-fringe-width 0 )
+            right-fringe-width 0
+
+            ;; Remove cpu load indicator in modeline
+            display-time-default-load-average nil
+      )
 
       (setq mac-option-key-is-meta nil
             mac-command-key-is-meta t
@@ -319,6 +356,33 @@ let
       ;; Use tabbar binding for these keybindings
       (global-unset-key (kbd "C-x <right>"))
       (global-unset-key (kbd "C-x <left>"))
+      ;; too close to yank, so annoying when this happens
+      (global-unset-key (kbd "C-t"))
+
+      (use-package clojure-mode :defer)
+      (use-package cider-mode :defer)
+      (use-package paredit-mode :defer)
+
+      (use-package js2-mode
+        :defer
+        :config ;; nice examples: https://git.v0.io/hlissner/doom-emacs/src/commit/69beabe287efd40a168aca1ba3c64baba705ae4e/modules/lang/javascript/config.el#L40
+        (setq js2-strict-inconsistent-return-warning nil
+              js2-strict-cond-assign-warning nil
+              js2-strict-var-redeclaration-warning nil
+              js2-strict-var-hides-function-arg-warning nil
+              js2-strict-inconsistent-return-warning nil
+              js2-strict-missing-semi-warning nil
+              js2-mode-show-parse-errors nil
+              js2-missing-semi-one-line-override nil
+              js2-move-point-on-right-click nil
+              js2-allow-rhino-new-expr-initializer nil
+              js2-concat-multiline-strings nil
+              js2-highlight-level 3
+              js2-highlight-external-variables t
+              js2-include-node-externs t
+              js2-skip-preprocessor-directives t
+              js2-idle-timer-delay 0.1
+              ))
 
       (use-package magit
         :defer
@@ -361,28 +425,46 @@ let
        :config
        (add-hook 'eval-expression-minibuffer-setup-hook #'rainbow-delimiters-mode)
        (add-hook 'clojure-mode-hook #'rainbow-delimiters-mode)
-       (add-hook 'cider-repl-mode #'rainbow-delimiters-mode))
+       (add-hook 'cider-repl-mode #'rainbow-delimiters-mode)
+       (add-hook 'js-mode #'rainbow-delimiters-mode)
+       (add-hook 'js2-mode-hook #'rainbow-delimiters-mode)
+       (add-hook 'typescript-mode-hook #'rainbow-delimiters-mode))
 
-     (use-package solaire-mode
-       :defer
-       :hook ((change-major-mode . turn-on-solaire-mode)
-              (after-revert . turn-on-solaire-mode)
-              (ediff-prepare-buffer . solaire-mode)
-              (minibuffer-setup . solaire-mode-in-minibuffer))
-       :config
-       (add-to-list 'solaire-mode-themes-to-face-swap '"vscode-dark-plus")
-       (setq solaire-mode-auto-swap-bg t)
-       (solaire-global-mode +1))
+     (use-package highlight-symbol-mode :defer)
 
      (use-package solidity-mode
        :defer
      )
 
-     (use-package vscode-dark-plus-theme
+     (use-package smartparens-mode
        :defer
-       :after solaire-mode
        :config
-       (load-theme 'vscode-dark-plus t))
+       (add-hook 'js-mode-hook #'smartparens-mode)
+     )
+
+     (use-package tide-mode
+       :defer
+       :config
+       (add-hook 'js-mode-hook #'tide-mode)
+     )
+
+     (defun jsmodes-init ()
+       (progn
+         (js2-minor-mode t)
+         (setq tide-tsserver-executable "${jsnixPkgs.typescript}/bin/tsserver")
+         (setq tide-tscompiler-executable "${jsnixPkgs.typescript}/bin/tsc")
+         (setq tide-node-executable "${pkgs.nodejs_latest}/bin/node")
+         (setq company-tooltip-align-annotations t)
+         (setq tide-format-options '(:indentSize 2 :tabSize 2 :insertSpaceAfterFunctionKeywordForAnonymousFunctions t :placeOpenBraceOnNewLineForFunctions nil))
+         (local-set-key (kbd "C-c d") 'tide-documentation-at-point)
+         (electric-indent-local-mode nil)
+         (smartparens-mode t)
+         (rainbow-delimiters-mode t)
+         (highlight-symbol-mode t)
+         (tide-setup)
+         (tide-hl-identifier-mode +1)
+         (set-electric! 'js2-mode :chars '(?\} ?\) ?. ?:))
+         ))
 
      (use-package web-mode :defer
        :mode  (("\\.json$" . web-mode)
@@ -394,39 +476,21 @@ let
                (".*babelrc.*" . web-mode)))
 
      (use-package js-mode :defer
-        :init
-        (setq js2-strict-inconsistent-return-warning nil
-              js2-strict-cond-assign-warning nil
-              js2-strict-var-redeclaration-warning nil
-              js2-strict-var-hides-function-arg-warning nil
-              js2-move-point-on-right-click nil
-              js2-allow-rhino-new-expr-initializer nil
-              js2-concat-multiline-strings nil
-              js2-highlight-level 3
-              js2-include-node-externs t
-              )
+        :config (add-hook 'js-mode-hook #'jsmodes-init)
         :mode (
-               ("\\.ts$" . js-mode)
-               ("\\.tsx$" . js-mode)
-               ("\\.ts$" . typescript-mode)
-               ("\\.tsx$" . typescript-mode)
                ("\\.js$" . js-mode)
                ("\\.esm$" . js-mode)
                ("\\.jsx$" . js-mode)
                ("\\.mjs$" . js-mode)
+               ("\\.cjs$" . js-mode)
          ))
 
-      (add-hook 'js-mode-hook
-          (lambda ()
-            (progn
-              (js2-minor-mode t)
-              (electric-indent-local-mode t)
-              (smartparens-mode t)
-              (rainbow-delimiters-mode t)
-              (highlight-symbol-mode t))))
-
-              ;; (color-identifiers-mode t)
-              ;; (color-identifiers:regenerate-colors)
+     (use-package typescript-mode :defer
+        :config (add-hook 'typescript-mode-hook #'jsmodes-init)
+        :mode (
+               ("\\.ts$" . typescript-mode)
+               ("\\.tsx$" . typescript-mode)
+         ))
 
       (add-to-list 'magic-mode-alist '("\\(---\n\\)?AWSTemplateFormatVersion:" . cfn-mode))
 
@@ -437,6 +501,7 @@ let
       (column-number-mode t)
 
       ;; Show the time
+      (setq display-time-format "%A %d %b %H:%M")
       (display-time-mode)
 
       ;; Write yes as y and no as n
@@ -452,7 +517,8 @@ let
       (menu-bar-mode -1)
 
       ;; Save history
-      (savehist-mode 1)
+      (savehist-mode t)
+      (setq-default history-length 1000)
 
       ;; Display the zoom value
       (size-indication-mode t)
@@ -485,7 +551,17 @@ let
       ${ido-config}
 
       ${keybindings-and-extra}
+
+      (custom-set-faces
+       '(mode-line ((t (:background "#373844" :foreground "white" :box (:line-width -1 :style released-button)))))
+      )
+
+      ;; Display ^L special-cars in pretty way
+      (load-file "${prettyCtrlL}")
+      (setq pp^L-^L-string "          Section                           ")
+      (pretty-control-l-mode 1)
   '';
+
 in {
   emacs = withpkgs (epkgs: (with epkgs.melpaPackages; [
       (pkgs.runCommand "default.el" {} ''
@@ -495,6 +571,7 @@ in {
       cider
       clojure-mode
       company
+      dracula-theme
       elm-mode
       haskell-mode
       highlight-symbol
@@ -511,12 +588,10 @@ in {
       smex
       typescript-mode
       tide
-      solaire-mode
       solidity-mode
       terraform-doc
       terraform-mode
       use-package
-      vscode-dark-plus-theme
       web-mode
       yaml-mode
       cfn-mode

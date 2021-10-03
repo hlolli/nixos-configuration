@@ -1,4 +1,4 @@
-{ nixpkgs, nixUnstableFlake, system, ... }:
+{ nixpkgs, system, ... }:
 
 let buildNodejs = pkgs: (pkgs.callPackage (nixpkgs + "/pkgs/development/web/nodejs/nodejs.nix") {
       icu = pkgs.icu68;
@@ -8,59 +8,40 @@ let buildNodejs = pkgs: (pkgs.callPackage (nixpkgs + "/pkgs/development/web/node
 in self: super: {
   # darwin = super.darwin // { xcode = myXcode; xcode_12_5 = myXcode; };
 
+  sqsmover = self.buildGoModule rec {
+    pname = "sqsmover";
+    version = "0.0.0";
+
+    src = self.fetchFromGitHub {
+      owner = "mercury2269";
+      repo = "sqsmover";
+      rev = "b06c8b8e1a181705a17539af3d00261c39bb3c83";
+      sha256 = "sha256-Br1+iEiAJzyV/MsVxFYZxaLGrCK1voShhvlyvNb1zhk=";
+    };
+
+    vendorSha256 = "sha256-7VK6oUO0Q90AL4qB8adtejD7ltoWG12vsuvwjj7p8wo=";
+    runVend = true;
+  };
+
   pandoc = super.writeShellScriptBin "pandoc" "echo true";
   myXcode = (super.callPackages ./xcode.nix { }).xcode_12_5;
 
-  qemu = super.qemu.overrideAttrs(old: {
-    patches = [
-      (builtins.head old.patches)
-      (builtins.fetchurl {
-        url = "https://raw.githubusercontent.com/NixOS/nixpkgs/416488360b334083743b08d94f7f76c526db0042/pkgs/applications/virtualization/qemu/9p-darwin.patch";
-        sha256 = "sha256:01ahgf10n79yxcx3hgzrk4v299jklv8dpzzdxzpszgcw9q5l92m5";
-      })
-      (builtins.fetchurl {
-        url = "https://gist.githubusercontent.com/stefannilsson/8a083e07f4103af2520e87fdb1f50efc/raw/b0873ad29606032b8b8c35b91cb098d9f1ce6635/qemu-patch-apple-arm64-workaround.patch";
-        sha256 = "sha256:0mi9ar0p6p8q2xx80gdf7cphz60cqa2ip4ks2gx76jlkgllwnzfg";
-      })
-    ];
-  });
-
-  nodejs = (buildNodejs super) {
-    enableNpm = true;
-    sha256 = "sha256-0Pk7mEKvuPI8B4YunNSCJucQRUf3skFdJQ/bdS0bNc8=";
-    version = "16.2.0";
-  };
-
-  # nodejs = ((buildNodejs super) {
+  # nodejs = (buildNodejs super) {
   #   enableNpm = true;
-  #   sha256 = "sha256-oKkjD5LB8XV+Y/0cF8waPbY8HX72wboe1JUcwysCCHw=";
-  #   version = "16.1.0";
-  # }).overrideAttrs(oldAttrs: {
-  #   postInstall = ''
-  #     rm $out/lib/node_modules/npm/bin/node-gyp-bin/node-gyp
-  #     ln -s ${prev.nodePackages.node-gyp}/bin/node-gyp \
-  #       $out/lib/node_modules/npm/bin/node-gyp-bin/node-gyp
-  #   '';
+  #   sha256 = "sha256-0Pk7mEKvuPI8B4YunNSCJucQRUf3skFdJQ/bdS0bNc8=";
+  #   version = "16.2.0";
+  # };
+  nodejs = super.nodejs-16_x;
+  # nixUnstable = super.nixUnstable.overrideAttrs (o: {
+  #   doInstallCheck = false;
+  #   doCheck = false;
+  #   patchPhase = "true";
+  #   buildInputs = o.buildInputs ++ [
+  #     super.nlohmann_json
+  #   ];
   # });
 
-
-  nixUnstable = super.nixUnstable.overrideAttrs (o: {
-    src = nixUnstableFlake;
-    doInstallCheck = false;
-    doCheck = false;
-    patchPhase = "true";
-    buildInputs = o.buildInputs ++ [
-      super.nlohmann_json
-    ];
-  });
-
-  nix = super.nixUnstable.overrideAttrs (o: {
-    src = nixUnstableFlake;
-    doCheck = false;
-    doInstallCheck = false;
-    patchPhase = "true";
-    buildInputs = o.buildInputs ++ [
-      super.nlohmann_json
-    ];
-  });
+  nix = self.nixUnstable;
+  # gcc = super.gcc11;
+  # gcc10 = super.gcc11;
 }

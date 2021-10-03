@@ -8,3 +8,5 @@ result
 node_modules
 **/node_modules
 henda
+.cpcache
+.clojure

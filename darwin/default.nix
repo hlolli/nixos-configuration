@@ -1,12 +1,11 @@
-{ lib, inputs, ... }:
+{ inputs, ... }:
 
 let
-  inherit (inputs) darwin nixUnstable nixpkgs system slackpr;
+  inherit (inputs) darwin nixpkgs system slackpr;
   darwinOverlays = [
     (
       import ./overlays.nix {
         inherit nixpkgs system;
-        nixUnstableFlake = nixUnstable;
         pkgs_ = pkgs;
       }
     )
@@ -17,27 +16,35 @@ let
     config = { allowUnfree = true; };
     overlays = darwinOverlays;
   };
+  inherit (pkgs) lib;
   goku = pkgs.callPackage ./goku/goku.nix (pkgs // {inherit (pkgs.darwin.apple_sdk.frameworks) Foundation;});
   docker = (pkgs.docker.override { buildxSupport = true; });
-  vault_ = pkgs.vault.overrideAttrs (oldAttrs: {
-    src = pkgs.fetchFromGitHub {
-      owner = "hashicorp";
-      repo = "vault";
-      rev = "v1.7.3";
-      sha256 = "sha256-BO4xzZrX9eVETQWjBDBfP7TlD7sO+gLgbB330A11KAI=";
-    };
-    preBuild = ''
-      substituteInPlace go/src/github.com/hashicorp/vault/vendor/github.com/shirou/gopsutil/cpu/cpu_darwin_cgo.go \
-        --replace TARGET_OS_MAC 1
-    '';
-  });
+  # vault_ = pkgs.vault.overrideAttrs (oldAttrs: {
+  #   src = pkgs.fetchFromGitHub {
+  #     owner = "hashicorp";
+  #     repo = "vault";
+  #     rev = "v1.7.3";
+  #     sha256 = "sha256-BO4xzZrX9eVETQWjBDBfP7TlD7sO+gLgbB330A11KAI=";
+  #   };
+  #   preBuild = ''
+  #     substituteInPlace go/src/github.com/hashicorp/vault/vendor/github.com/shirou/gopsutil/cpu/cpu_darwin_cgo.go \
+  #       --replace TARGET_OS_MAC 1
+  #   '';
+  # });
   slack = (import slackpr { inherit system; config = { allowUnfree = true; }; }).slack;
   emacs = (pkgs.callPackage ../emacs.nix {}).emacs;
+  exa = pkgs.exa.overrideAttrs(oldAttrs: {
+    buildInputs = [ pkgs.libgit2 ] ++ oldAttrs.buildInputs;
+  });
+
   # signal-desktop = pkgs.callPackage ./signal.nix { inherit lib; };
 in {
-  
-  config = {
 
+  imports = [
+    ../javascript
+  ];
+
+  config = {
     nix = {
       package = pkgs.nixUnstable;
       # buildCores = 8;
@@ -45,7 +52,7 @@ in {
       useSandbox = false;
       trustedUsers = [ "hlodversigurdsson" ];
       binaryCaches = [
-        "https://darwin-configuration.cachix.org/"
+        # "https://darwin-configuration.cachix.org/"
         "https://cache.nixos.org/"
       ];
       binaryCachePublicKeys = [
@@ -55,10 +62,10 @@ in {
       ];
       requireSignedBinaryCaches = true;
       extraOptions = ''
-      experimental-features = nix-command flakes ca-references
-      extra-platforms = x86_64-darwin x86_64-linux
-      allowUnfree = true
-    '';
+        experimental-features = nix-command flakes ca-references
+        extra-platforms = x86_64-darwin x86_64-linux
+        allowUnfree = true
+      '';
 
       # https://medium.com/@zw3rk/provisioning-a-nixos-server-from-macos-d36055afc4ad
       # distributedBuilds = true;
@@ -73,9 +80,11 @@ in {
 
     environment.systemPackages =
       [ emacs ] ++ ( with pkgs; [
-        # awscli2
+        awscli2
+        aws-vault
         (docker.override { buildxSupport = true; })
         direnv
+        exa
         git
         gitflow
         gnupg
@@ -85,9 +94,12 @@ in {
         nixos-shell
         nodejs
         podman
+        postgresql_13
         slack
+        sqsmover
+        tmux
         tree
-        vault_
+        # vault_
         vim
         yarn
         qemu
@@ -124,7 +136,7 @@ in {
         '';
         interactiveShellInit = ''
         function ll
-          ${pkgs.exa}/bin/exa --all --long --header --grid $argv
+          ${exa}/bin/exa --all --long --header --grid $argv
         end
 
         function brew
