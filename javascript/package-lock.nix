@@ -272,10 +272,10 @@ let
       inherit dependencies extraDependencies;
       name = "prettier";
       packageName = "prettier";
-      version = "2.4.0";
+      version = "2.4.1";
       src = fetchurl {
-        url = "https://registry.npmjs.org/prettier/-/prettier-2.4.0.tgz";
-        sha512 = "DsEPLY1dE5HF3BxCRBmD4uYZ+5DCbvatnolqTqcxEgKVZnL2kUfyu7b8pPQ5+hTBkdhU9SLUmK0/pHb07RE4WQ==";
+        url = "https://registry.npmjs.org/prettier/-/prettier-2.4.1.tgz";
+        sha512 = "9fbDAXSBcc6Bs1mZrDYb3XKzDLm4EXXL9sC1LqKP5rZkT6KRr/rf9amVUcODVXgguK/isJz0d0hP72WeaKWsvA==";
       };
       buildInputs = [ nodejs python3 makeWrapper jq  ] ++
          (pkgs.lib.optionals pkgs.stdenv.isDarwin [ pkgs.xcodebuild ]) ++

@@ -24,17 +24,20 @@
           inherit overlays system;
           config = { allowUnfree = true; };
         });
+        darwinConfigurations = (darwin.lib.evalConfig {
+          inputs = { inherit nixpkgs slackpr; darwin = self; system = "aarch64-darwin"; };
+          modules = [ darwin.darwinModules.flakeOverrides ./darwin ];
+        } // { inherit nixpkgs; currentSystem = "aarch64-darwin"; });
       in ({
         nixpkgs.config.allowUnfree = true;
 
       } // lib.optionalAttrs stdenv.isDarwin {
 
         packages = {
+          emacs = (pkgs.callPackage ../emacs.nix {}).emacs;
           darwinConfigurations = {
-            Hlodvers-MacBook-Air = (darwin.lib.evalConfig {
-              inputs = { inherit nixpkgs slackpr; darwin = self; system = "aarch64-darwin"; };
-              modules = [ darwin.darwinModules.flakeOverrides ./darwin ];
-            } // { inherit nixpkgs; currentSystem = "aarch64-darwin"; });
+            Hlodvers-Air.fritz.box = darwinConfigurations;
+            Hlodvers-MacBook-Air = darwinConfigurations;
           };
         };
       }));

@@ -23,8 +23,8 @@ in self: super: {
     runVend = true;
   };
 
-  pandoc = super.writeShellScriptBin "pandoc" "echo true";
-  myXcode = (super.callPackages ./xcode.nix { }).xcode_12_5;
+  # pandoc = super.writeShellScriptBin "pandoc" "echo true";
+  # myXcode = (super.callPackages ./xcode.nix { }).xcode_12_5;
 
   # nodejs = (buildNodejs super) {
   #   enableNpm = true;

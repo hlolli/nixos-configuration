@@ -1,28 +1,18 @@
 { config, pkgs, lib, ... }:
 
 let
-  emacs-base = (import (pkgs.fetchFromGitHub {
-    owner = "NixOS";
-    repo = "nixpkgs";
-    rev = "ef3a770fd43ab5e1b78ca7dd6b2a195c370befac";
-    sha256 = "sha256-D3NDtJbvyqsw+Sd2Y40LNBK/zv250FuTyFBq8zQM6vU=";
-  }) { localSystem = "aarch64-darwin"; }).emacs;
   jsnixPkgs = import ./javascript/package-lock.nix pkgs;
   prettyCtrlL = pkgs.fetchurl {
     url = "https://raw.githubusercontent.com/jsyjr/pp-c-l/961353ead656a4961f91dd6a0d7b9df925e29869/pp-c-l.el";
     sha256 = "sha256-rV6iRiCfp2qwT1YbIgsLizfhIWlEOvPkMCEcJSlqsA4=";
   };
-    #
-  # emacs-base = pkgs.emacs.overrideAttrs(o: {
-  #   preConfigure = lib.optionalString (pkgs.stdenv.isDarwin && pkgs.stdenv.isAarch64) ''
-  #     sed -i 's/^DO_CODESIGN=.*/DO_CODESIGN=yes/' src/Makefile.in
-  # '';
-  # });
-  withpkgs = (pkgs.emacsPackagesGen emacs-base).emacsWithPackages;
+
+  withpkgs = (pkgs.emacsPackagesGen pkgs.emacs).emacsWithPackages;
   runtime-pkgs = lib.strings.concatMapStrings (x: ":" + x + "/bin") (
     with pkgs; [
       git
       python39Packages.cfn-lint
+      jsnixPkgs.prettier
     ]
   );
 
@@ -302,7 +292,7 @@ let
         (setenv "PATH" path-from-shell)
         (setq exec-path (split-string path-from-shell ":")))
       (setenv "PATH" (concat (getenv "PATH") ":/run/current-system/sw/bin:~/.npm-global/bin${runtime-pkgs}"))
-      (setenv "NODE_PATH" "~/.yarn/bin:~/.npm-global/lib/node_modules")
+      (setenv "NODE_PATH" "${jsnixPkgs.typescript}/lib/node_modules:${jsnixPkgs.prettier}/lib/node_modules:~/.yarn/bin:~/.npm-global/lib/node_modules")
 
       (setq auto-save-list-file-prefix (concat user-emacs-directory "tmp/auto-save-list/.saves-")
             custom-file (concat user-emacs-directory "tmp/custom.el")
@@ -331,6 +321,8 @@ let
             left-fringe-width 2
             column-number-indicator-zero-based nil
             right-fringe-width 0
+            mmm-submode-decoration-level 0
+            typescript-indent-level 2
 
             ;; Remove cpu load indicator in modeline
             display-time-default-load-average nil
@@ -365,7 +357,10 @@ let
 
       (use-package js2-mode
         :defer
-        :config ;; nice examples: https://git.v0.io/hlissner/doom-emacs/src/commit/69beabe287efd40a168aca1ba3c64baba705ae4e/modules/lang/javascript/config.el#L40
+        :config
+        (setq js2-ignored-warnings '("msg.no.side.effects"))
+        ;; nice examples:
+        ;; https://git.v0.io/hlissner/doom-emacs/src/commit/69beabe287efd40a168aca1ba3c64baba705ae4e/modules/lang/javascript/config.el#L40
         (setq js2-strict-inconsistent-return-warning nil
               js2-strict-cond-assign-warning nil
               js2-strict-var-redeclaration-warning nil
@@ -373,6 +368,8 @@ let
               js2-strict-inconsistent-return-warning nil
               js2-strict-missing-semi-warning nil
               js2-mode-show-parse-errors nil
+              js2-instanceof-has-side-effects t
+              js2-getprop-has-side-effects t
               js2-missing-semi-one-line-override nil
               js2-move-point-on-right-click nil
               js2-allow-rhino-new-expr-initializer nil
@@ -430,7 +427,7 @@ let
        (add-hook 'js2-mode-hook #'rainbow-delimiters-mode)
        (add-hook 'typescript-mode-hook #'rainbow-delimiters-mode))
 
-     (use-package highlight-symbol-mode :defer)
+     (use-package rjsx-mode :defer)
 
      (use-package solidity-mode
        :defer
@@ -450,7 +447,6 @@ let
 
      (defun jsmodes-init ()
        (progn
-         (js2-minor-mode t)
          (setq tide-tsserver-executable "${jsnixPkgs.typescript}/bin/tsserver")
          (setq tide-tscompiler-executable "${jsnixPkgs.typescript}/bin/tsc")
          (setq tide-node-executable "${pkgs.nodejs_latest}/bin/node")
@@ -460,10 +456,8 @@ let
          (electric-indent-local-mode nil)
          (smartparens-mode t)
          (rainbow-delimiters-mode t)
-         (highlight-symbol-mode t)
          (tide-setup)
-         (tide-hl-identifier-mode +1)
-         (set-electric! 'js2-mode :chars '(?\} ?\) ?. ?:))
+         (setq-local electric-indent-inhibit t)
          ))
 
      (use-package web-mode :defer
@@ -476,7 +470,6 @@ let
                (".*babelrc.*" . web-mode)))
 
      (use-package js-mode :defer
-        :config (add-hook 'js-mode-hook #'jsmodes-init)
         :mode (
                ("\\.js$" . js-mode)
                ("\\.esm$" . js-mode)
@@ -484,13 +477,42 @@ let
                ("\\.mjs$" . js-mode)
                ("\\.cjs$" . js-mode)
          ))
+      (add-hook 'js-mode-hook #'jsmodes-init)
 
+     ;; https://github.com/emacs-typescript/typescript.el/issues/4#issuecomment-873485004
      (use-package typescript-mode :defer
-        :config (add-hook 'typescript-mode-hook #'jsmodes-init)
-        :mode (
-               ("\\.ts$" . typescript-mode)
-               ("\\.tsx$" . typescript-mode)
-         ))
+      :init
+      (define-derived-mode typescript-tsx-mode typescript-mode "tsx")
+      :mode (
+        ("\\.ts$" . typescript-tsx-mode)
+        ("\\.tsx$" . typescript-tsx-mode)
+      )
+      :config
+      (add-hook 'typescript-mode-hook #'jsmodes-init)
+      (add-hook 'typescript-mode-hook #'subword-mode)
+     )
+
+     (use-package tree-sitter
+        :hook ((typescript-mode . tree-sitter-hl-mode)
+        (typescript-tsx-mode . tree-sitter-hl-mode)))
+
+     (use-package tree-sitter-langs
+       :after tree-sitter
+       :config
+       (tree-sitter-require 'tsx)
+       (add-to-list 'tree-sitter-major-mode-language-alist '(typescript-tsx-mode . tsx)))
+
+
+      (require 'mmm-mode)
+      (setq mmm-global-mode 'maybe)
+      (mmm-add-classes
+          '((js-graphql
+            :submode graphql-mode
+            :face nil
+            :front " gql`"
+            :back "`")))
+      (mmm-add-mode-ext-class 'js-mode nil 'js-graphql)
+      (mmm-add-mode-ext-class 'typescript-mode nil 'js-graphql)
 
       (add-to-list 'magic-mode-alist '("\\(---\n\\)?AWSTemplateFormatVersion:" . cfn-mode))
 
@@ -558,8 +580,9 @@ let
 
       ;; Display ^L special-cars in pretty way
       (load-file "${prettyCtrlL}")
-      (setq pp^L-^L-string "          Section                           ")
+      (setq pp^L-^L-string "                                            ")
       (pretty-control-l-mode 1)
+      (require 'rust-mode)
   '';
 
 in {
@@ -568,33 +591,37 @@ in {
          mkdir -p $out/share/emacs/site-lisp
          cp ${emacs-config} $out/share/emacs/site-lisp/default.el
       '')
+      cfn-mode
       cider
       clojure-mode
       company
       dracula-theme
       elm-mode
+      go-mode
+      graphql-mode
       haskell-mode
       highlight-symbol
-      js2-mode
+      iter2 nvm
       magit
-      go-mode
+      mmm-mode
       nix-mode
       notmuch
       ox-reveal
       prettier
-      iter2 nvm
       rainbow-delimiters
       smartparens
       smex
-      typescript-mode
-      tide
       solidity-mode
+      rust-mode
       terraform-doc
       terraform-mode
+      tide
+      tree-sitter
+      tree-sitter-langs
+      typescript-mode
       use-package
       web-mode
       yaml-mode
-      cfn-mode
   ]) ++ (with epkgs.elpaPackages; [
       undo-tree
     ])

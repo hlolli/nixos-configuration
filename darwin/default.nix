@@ -6,7 +6,6 @@ let
     (
       import ./overlays.nix {
         inherit nixpkgs system;
-        pkgs_ = pkgs;
       }
     )
   ];
@@ -17,7 +16,7 @@ let
     overlays = darwinOverlays;
   };
   inherit (pkgs) lib;
-  goku = pkgs.callPackage ./goku/goku.nix (pkgs // {inherit (pkgs.darwin.apple_sdk.frameworks) Foundation;});
+  goku = pkgs.callPackage ./goku/goku.nix (pkgs // {inherit (pkgs.darwin.apple_sdk.frameworks) Foundation; clang = pkgs.clang_12; });
   docker = (pkgs.docker.override { buildxSupport = true; });
   # vault_ = pkgs.vault.overrideAttrs (oldAttrs: {
   #   src = pkgs.fetchFromGitHub {
@@ -80,9 +79,10 @@ in {
 
     environment.systemPackages =
       [ emacs ] ++ ( with pkgs; [
+        (docker.override { buildxSupport = true; })
         awscli2
         aws-vault
-        (docker.override { buildxSupport = true; })
+        colordiff
         direnv
         exa
         git
@@ -91,6 +91,8 @@ in {
         goku
         hcloud
         jq
+        meld
+        nix-prefetch-github
         nixos-shell
         nodejs
         podman
@@ -99,6 +101,7 @@ in {
         sqsmover
         tmux
         tree
+        wdiff
         # vault_
         vim
         yarn
