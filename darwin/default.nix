@@ -44,12 +44,14 @@ in {
   ];
 
   config = {
+    users.nix.configureBuildUsers = true;
+
     nix = {
       package = pkgs.nixUnstable;
       # buildCores = 8;
       useDaemon = true;
       useSandbox = false;
-      trustedUsers = [ "hlodversigurdsson" ];
+      trustedUsers = [ "hlodversigurdsson" "root" ];
       binaryCaches = [
         # "https://darwin-configuration.cachix.org/"
         "https://cache.nixos.org/"
@@ -59,22 +61,29 @@ in {
         "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
         "darwin-configuration.cachix.org-1:ysPLcM9Haaufad13Bc0x+UGj3xZhE9lP8fwp8hjjspU="
       ];
-      requireSignedBinaryCaches = true;
+      requireSignedBinaryCaches = false;
+      # builders-use-substitutes = true
+      # builders = @/etc/nix/machines
       extraOptions = ''
+        builders-use-substitutes = true
+        builders = @/etc/nix/machines
+        extra-platforms = x86_64-darwin aarch64-darwin
         experimental-features = nix-command flakes ca-references
-        extra-platforms = x86_64-darwin x86_64-linux
-        allowUnfree = true
+        warn-dirty = false
       '';
 
       # https://medium.com/@zw3rk/provisioning-a-nixos-server-from-macos-d36055afc4ad
-      # distributedBuilds = true;
-      # buildMachines = [ {
-      #   hostName = "95.216.170.8";
-      #   sshUser = "hlolli-cloud";
-      #   sshKey = "/Users/hlodversigurdsson/.ssh/id_rsa.pub";
-      #   systems = [ "x86_64-linux" ];
-      #   maxJobs = 2;
-      # }];
+      distributedBuilds = true;
+
+      buildMachines = [ {
+        hostName = "vartex-dev";
+        sshUser = "hlolli";
+        sshKey = "/var/root/.ssh/id_rsa";
+        systems = [ "x86_64-linux" ];
+        supportedFeatures = [ "kvm" ];
+        # mandatoryFeatures = [ "kvm" ];
+        maxJobs = 4;
+      }];
     };
 
     environment.systemPackages =
@@ -82,6 +91,7 @@ in {
         (docker.override { buildxSupport = true; })
         awscli2
         aws-vault
+        chromedriver
         colordiff
         direnv
         exa
@@ -99,6 +109,8 @@ in {
         postgresql_13
         slack
         sqsmover
+        terraform
+        terragrunt
         tmux
         tree
         wdiff
@@ -126,8 +138,8 @@ in {
     };
 
     programs = {
-
       gnupg = {
+        agent.enableSSHSupport = true;
         agent.enable = true;
       };
 
@@ -135,7 +147,7 @@ in {
       fish = {
         enable = true;
         shellInit = ''
-          set PATH ~/.npm-global/bin /opt/homebrew/bin ~/.yarn/bin $PATH
+          set PATH /nix/var/nix/profiles/system/sw/bin ~/.npm-global/bin /opt/homebrew/bin ~/.yarn/bin $PATH
         '';
         interactiveShellInit = ''
         function ll
@@ -153,6 +165,11 @@ in {
     };
 
     services = {
+      autossh.sessions = [ {
+        name = "postgres-tunnel";
+        user = "root";
+      } ];
+
       emacs = {
         enable = true;
         package = emacs;
@@ -161,9 +178,10 @@ in {
         enable = true;
         logFile = "/var/tmp/lorri.log";
       };
-      nix-daemon = {
-        enable = true;
-      };
+      # nix-daemon = {
+      #   enable = true;
+      #   logFile = "/var/log/nix-daemon.log";
+      # };
     };
     system = {
       stateVersion = 4;

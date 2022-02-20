@@ -15,30 +15,37 @@
 
   outputs = { self, nixpkgs, darwin, flake-compat, slackpr, flake-utils }:
     let
-      systems = [ "x86_64-darwin" "aarch64-darwin" "x86_64-linux" ];
-    in flake-utils.lib.eachSystem systems (system:
-      let
+      # systems = [ "aarch64-darwin" "x86_64-linux" ];
+    # in flake-utils.lib.eachSystem systems (system:
+      # let
         inherit (pkgs) stdenv lib;
         overlays = [];
+        system = "aarch64-darwin";
         pkgs = (import nixpkgs {
           inherit overlays system;
           config = { allowUnfree = true; };
         });
         darwinConfigurations = (darwin.lib.evalConfig {
-          inputs = { inherit nixpkgs slackpr; darwin = self; system = "aarch64-darwin"; };
+          inputs = { inherit nixpkgs system slackpr; darwin = self; };
           modules = [ darwin.darwinModules.flakeOverrides ./darwin ];
         } // { inherit nixpkgs; currentSystem = "aarch64-darwin"; });
       in ({
         nixpkgs.config.allowUnfree = true;
 
-      } // lib.optionalAttrs stdenv.isDarwin {
+        # } // lib.optionalAttrs stdenv.isDarwin
+        darwinConfigurations = {
+          Hlodvers-Air = darwinConfigurations;
+          # Hlodvers-Air.fritz.box = darwinConfigurations;
+          Hlodvers-MacBook-Air = darwinConfigurations;
+        };
 
-        packages = {
+      packages = {
           emacs = (pkgs.callPackage ../emacs.nix {}).emacs;
           darwinConfigurations = {
-            Hlodvers-Air.fritz.box = darwinConfigurations;
+            Hlodvers-Air = darwinConfigurations;
+            # Hlodvers-Air.fritz.box = darwinConfigurations;
             Hlodvers-MacBook-Air = darwinConfigurations;
           };
         };
-      }));
+      });
 }

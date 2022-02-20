@@ -13,6 +13,7 @@ let
       git
       python39Packages.cfn-lint
       jsnixPkgs.prettier
+      nodejs_latest
     ]
   );
 
@@ -288,13 +289,14 @@ let
 
       ;; copy fish shell path into the path.
       (let ((path-from-shell (shell-command-to-string
-        "/run/current-system/sw/bin/fish -i -c \"echo -n \\$PATH[1]; for val in \\$PATH[2..-1];echo -n \\\":\\$val\\\";end\"")))
+        "/nix/var/nix/profiles/system/sw/bin/fish -i -c \"echo -n \\$PATH[1]; for val in \\$PATH[2..-1];echo -n \\\":\\$val\\\";end\"")))
         (setenv "PATH" path-from-shell)
         (setq exec-path (split-string path-from-shell ":")))
-      (setenv "PATH" (concat (getenv "PATH") ":/run/current-system/sw/bin:~/.npm-global/bin${runtime-pkgs}"))
+      (setenv "PATH" (concat (getenv "PATH") ":/nix/var/nix/profiles/system/sw/bin:/run/current-system/sw/bin:~/.npm-global/bin${runtime-pkgs}:${pkgs.nodejs_latest}/bin"))
       (setenv "NODE_PATH" "${jsnixPkgs.typescript}/lib/node_modules:${jsnixPkgs.prettier}/lib/node_modules:~/.yarn/bin:~/.npm-global/lib/node_modules")
 
       (setq auto-save-list-file-prefix (concat user-emacs-directory "tmp/auto-save-list/.saves-")
+            tramp-auto-save-directory (concat user-emacs-directory "tmp/tramp-autosave")
             custom-file (concat user-emacs-directory "tmp/custom.el")
             custom-safe-themes t
             create-lockfiles nil
@@ -492,17 +494,6 @@ let
       (add-hook 'typescript-mode-hook #'subword-mode)
      )
 
-     (use-package tree-sitter
-        :hook ((typescript-mode . tree-sitter-hl-mode)
-        (typescript-tsx-mode . tree-sitter-hl-mode)))
-
-     (use-package tree-sitter-langs
-       :after tree-sitter
-       :config
-       (tree-sitter-require 'tsx)
-       (add-to-list 'tree-sitter-major-mode-language-alist '(typescript-tsx-mode . tsx)))
-
-
       (require 'mmm-mode)
       (setq mmm-global-mode 'maybe)
       (mmm-add-classes
@@ -600,10 +591,12 @@ in {
       go-mode
       graphql-mode
       haskell-mode
+      highlight
       highlight-symbol
       iter2 nvm
       magit
       mmm-mode
+      multi
       nix-mode
       notmuch
       ox-reveal
@@ -611,13 +604,12 @@ in {
       rainbow-delimiters
       smartparens
       smex
+      shut-up
       solidity-mode
       rust-mode
       terraform-doc
       terraform-mode
       tide
-      tree-sitter
-      tree-sitter-langs
       typescript-mode
       use-package
       web-mode

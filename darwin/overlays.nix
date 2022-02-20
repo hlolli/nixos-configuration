@@ -8,6 +8,13 @@ let buildNodejs = pkgs: (pkgs.callPackage (nixpkgs + "/pkgs/development/web/node
 in self: super: {
   # darwin = super.darwin // { xcode = myXcode; xcode_12_5 = myXcode; };
 
+  chromedriver = (import (self.fetchFromGitHub {
+    owner = "hlolli";
+    repo = "nixpkgs";
+    rev = "951a0aba3161918881e40aad9c1a26468198fbe3";
+    sha256 = "sha256-wQ6qilUuz7dZVMo0jMmsQSabEX5Kwc8TUL1cm+LTjz0=";
+  }) { localSystem = "aarch64-darwin"; }).chromedriver;
+
   sqsmover = self.buildGoModule rec {
     pname = "sqsmover";
     version = "0.0.0";
