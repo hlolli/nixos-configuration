@@ -9,43 +9,53 @@
       url = "github:edolstra/flake-compat";
       flake = false;
     };
-    slackpr.url = "github:hlolli/nixpkgs/slack-darwin-aarch64";
     flake-utils.url = "github:numtide/flake-utils";
+    emacs-ng = {
+      url = "github:hlolli/emacs-ng?rev=d3b0824a6be75087562099c2e41f6ae5839a3ec2";
+      inputs = { nixpkgs.follows = "nixpkgs"; };
+    };
   };
 
-  outputs = { self, nixpkgs, darwin, flake-compat, slackpr, flake-utils }:
+  outputs = { self, nixpkgs, darwin, flake-compat, flake-utils, emacs-ng }:
     let
       # systems = [ "aarch64-darwin" "x86_64-linux" ];
     # in flake-utils.lib.eachSystem systems (system:
       # let
-        inherit (pkgs) stdenv lib;
-        overlays = [];
-        system = "aarch64-darwin";
-        pkgs = (import nixpkgs {
-          inherit overlays system;
-          config = { allowUnfree = true; };
-        });
-        darwinConfigurations = (darwin.lib.evalConfig {
-          inputs = { inherit nixpkgs system slackpr; darwin = self; };
-          modules = [ darwin.darwinModules.flakeOverrides ./darwin ];
-        } // { inherit nixpkgs; currentSystem = "aarch64-darwin"; });
-      in ({
-        nixpkgs.config.allowUnfree = true;
+      inherit (pkgs) stdenv lib;
+      system = "aarch64-darwin";
+      overlays = [];
+      pkgs = (import nixpkgs {
+        inherit overlays;
+        currentSystem = system;
+          config = {
+            allowUnfree = true;
+          };
+      });
+      darwinConfigurations = (darwin.lib.evalConfig {
+        inputs = { inherit emacs-ng nixpkgs system; darwin = self; };
+        modules = [ darwin.darwinModules.flakeOverrides ./darwin ];
+      } // { inherit nixpkgs; currentSystem = system; });
+    in ({
+      nixpkgs.config.allowUnfree = true;
 
-        # } // lib.optionalAttrs stdenv.isDarwin
+      # } // lib.optionalAttrs stdenv.isDarwin
+      darwinConfigurations = {
+        hlodvers-mbp = darwinConfigurations;
+        Hlodvers-Air = darwinConfigurations;
+        Hlodvers-MacBook-Pro = darwinConfigurations;
+        # Hlodvers-Air.fritz.box = darwinConfigurations;
+        Hlodvers-MacBook-Air = darwinConfigurations;
+      };
+
+      packages = {
+        emacs = (pkgs.callPackage ../emacs.nix {}).emacs;
         darwinConfigurations = {
+          hlodvers-mbp = darwinConfigurations;
           Hlodvers-Air = darwinConfigurations;
+          Hlodvers-MacBook-Pro = darwinConfigurations;
           # Hlodvers-Air.fritz.box = darwinConfigurations;
           Hlodvers-MacBook-Air = darwinConfigurations;
         };
-
-      packages = {
-          emacs = (pkgs.callPackage ../emacs.nix {}).emacs;
-          darwinConfigurations = {
-            Hlodvers-Air = darwinConfigurations;
-            # Hlodvers-Air.fritz.box = darwinConfigurations;
-            Hlodvers-MacBook-Air = darwinConfigurations;
-          };
-        };
-      });
+      };
+    });
 }

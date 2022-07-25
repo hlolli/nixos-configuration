@@ -7,7 +7,7 @@ let
     sha256 = "sha256-rV6iRiCfp2qwT1YbIgsLizfhIWlEOvPkMCEcJSlqsA4=";
   };
 
-  withpkgs = (pkgs.emacsPackagesGen pkgs.emacs).emacsWithPackages;
+  withpkgs = (pkgs.emacsPackagesFor pkgs.emacs).emacsWithPackages;
   runtime-pkgs = lib.strings.concatMapStrings (x: ":" + x + "/bin") (
     with pkgs; [
       git
@@ -17,13 +17,11 @@ let
     ]
   );
 
-  text-layout = ''
-    (set-face-attribute 'default nil
-                        :font default-font
-                        :height 140
-                        :weight 'regular)
-   '';
   keybindings-and-extra = ''
+    (set-face-attribute 'default nil
+                        :height 120
+                        :weight 'regular)
+
     ;; replace the selected region with yank
     (defun hlolli/yank-replace (beg end)
       (interactive "r")
@@ -307,6 +305,8 @@ let
             gc-cons-threshold 20000000
             help-window-select t
             inhibit-startup-message t
+            inhibit-startup-screen t
+            inhibit-splash-screen t
 	          max-lisp-eval-depth 10000
             nrepl-use-ssh-fallback-for-remote-hosts t
             nxml-child-indent 4
@@ -344,6 +344,23 @@ let
         kept-old-versions 5    ; and how many of the old
       )
 
+      ;; https://github.com/emacscollective/no-littering
+      (setq no-littering-etc-directory
+      (expand-file-name "config/" user-emacs-directory))
+      (setq no-littering-var-directory
+      (expand-file-name "data/" user-emacs-directory))
+      (require 'no-littering)
+      (require 'recentf)
+      (add-to-list 'recentf-exclude no-littering-var-directory)
+      (add-to-list 'recentf-exclude no-littering-etc-directory)
+      (setq auto-save-file-name-transforms
+      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+      (setq custom-file (no-littering-expand-etc-file-name "custom.el"))
+      (when (fboundp 'startup-redirect-eln-cache)
+        (startup-redirect-eln-cache
+          (convert-standard-filename
+            (expand-file-name  "var/eln-cache/" user-emacs-directory))))
+
       ;; Disable annoying ctrl-z freeze
       (global-unset-key (kbd "C-z"))
 
@@ -355,7 +372,14 @@ let
 
       (use-package clojure-mode :defer)
       (use-package cider-mode :defer)
-      (use-package paredit-mode :defer)
+
+      (use-package paredit-mode :defer
+       :init
+        (add-hook 'emacs-lisp-mode-hook       (lambda () (paredit-mode +1)))
+        (add-hook 'lisp-mode-hook             (lambda () (paredit-mode +1)))
+        (add-hook 'lisp-interaction-mode-hook (lambda () (paredit-mode +1)))
+        (add-hook 'scheme-mode-hook           (lambda () (paredit-mode +1)))
+        (add-hook 'clojure-mode-hook          (lambda () (paredit-mode +1))))
 
       (use-package js2-mode
         :defer
@@ -452,7 +476,6 @@ let
          (setq tide-tsserver-executable "${jsnixPkgs.typescript}/bin/tsserver")
          (setq tide-tscompiler-executable "${jsnixPkgs.typescript}/bin/tsc")
          (setq tide-node-executable "${pkgs.nodejs_latest}/bin/node")
-         (setq company-tooltip-align-annotations t)
          (setq tide-format-options '(:indentSize 2 :tabSize 2 :insertSpaceAfterFunctionKeywordForAnonymousFunctions t :placeOpenBraceOnNewLineForFunctions nil))
          (local-set-key (kbd "C-c d") 'tide-documentation-at-point)
          (electric-indent-local-mode nil)
@@ -491,7 +514,6 @@ let
       )
       :config
       (add-hook 'typescript-mode-hook #'jsmodes-init)
-      (add-hook 'typescript-mode-hook #'subword-mode)
      )
 
       (require 'mmm-mode)
@@ -559,7 +581,7 @@ let
 
       (global-eldoc-mode)
 
-      (global-company-mode)
+      (global-corfu-mode)
 
       ${ido-config}
 
@@ -574,6 +596,8 @@ let
       (setq pp^L-^L-string "                                            ")
       (pretty-control-l-mode 1)
       (require 'rust-mode)
+      (setq inhibit-startup-message t)
+      (setq initial-scratch-message ";; Happy Hacking")
   '';
 
 in {
@@ -585,7 +609,6 @@ in {
       cfn-mode
       cider
       clojure-mode
-      company
       dracula-theme
       elm-mode
       go-mode
@@ -593,11 +616,13 @@ in {
       haskell-mode
       highlight
       highlight-symbol
-      iter2 nvm
+      iter2
+      nvm
       magit
       mmm-mode
       multi
       nix-mode
+      no-littering
       notmuch
       ox-reveal
       prettier
@@ -614,7 +639,9 @@ in {
       use-package
       web-mode
       yaml-mode
+      zig-mode
   ]) ++ (with epkgs.elpaPackages; [
+      corfu
       undo-tree
     ])
   );

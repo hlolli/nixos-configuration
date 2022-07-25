@@ -15,6 +15,13 @@ in self: super: {
     sha256 = "sha256-wQ6qilUuz7dZVMo0jMmsQSabEX5Kwc8TUL1cm+LTjz0=";
   }) { localSystem = "aarch64-darwin"; }).chromedriver;
 
+  csound = (import (self.fetchFromGitHub {
+    owner = "hlolli";
+    repo = "nixpkgs";
+    rev = "3505a56ab8527dae90c438d8020f4461c3ee22c5";
+    sha256 = "sha256-1vNlRwKcs7jaHeVlvERP9G80AA7+F5yUBIuLLPizoOo=";
+  }) { localSystem = "aarch64-darwin"; }).chromedriver;
+
   sqsmover = self.buildGoModule rec {
     pname = "sqsmover";
     version = "0.0.0";
@@ -26,8 +33,8 @@ in self: super: {
       sha256 = "sha256-Br1+iEiAJzyV/MsVxFYZxaLGrCK1voShhvlyvNb1zhk=";
     };
 
-    vendorSha256 = "sha256-7VK6oUO0Q90AL4qB8adtejD7ltoWG12vsuvwjj7p8wo=";
-    runVend = true;
+    vendorSha256 = "sha256-xuT8oNY0HcmC39o05RtawHxbc2epj/Cp8yzIVqOrU34=";
+    proxyVendor = true;
   };
 
   # pandoc = super.writeShellScriptBin "pandoc" "echo true";
