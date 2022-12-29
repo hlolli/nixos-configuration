@@ -1,7 +1,7 @@
 { config, pkgs, lib, ... }:
 
 let
-  jsnixPkgs = import ./javascript/package-lock.nix pkgs;
+  # jsnixPkgs = import ./javascript/package-lock.nix pkgs;
   prettyCtrlL = pkgs.fetchurl {
     url = "https://raw.githubusercontent.com/jsyjr/pp-c-l/961353ead656a4961f91dd6a0d7b9df925e29869/pp-c-l.el";
     sha256 = "sha256-rV6iRiCfp2qwT1YbIgsLizfhIWlEOvPkMCEcJSlqsA4=";
@@ -10,9 +10,10 @@ let
   withpkgs = (pkgs.emacsPackagesFor pkgs.emacs).emacsWithPackages;
   runtime-pkgs = lib.strings.concatMapStrings (x: ":" + x + "/bin") (
     with pkgs; [
+      csound
       git
       python39Packages.cfn-lint
-      jsnixPkgs.prettier
+      nodePackages.prettier
       nodejs_latest
     ]
   );
@@ -291,8 +292,7 @@ let
         (setenv "PATH" path-from-shell)
         (setq exec-path (split-string path-from-shell ":")))
       (setenv "PATH" (concat (getenv "PATH") ":/nix/var/nix/profiles/system/sw/bin:/run/current-system/sw/bin:~/.npm-global/bin${runtime-pkgs}:${pkgs.nodejs_latest}/bin"))
-      (setenv "NODE_PATH" "${jsnixPkgs.typescript}/lib/node_modules:${jsnixPkgs.prettier}/lib/node_modules:~/.yarn/bin:~/.npm-global/lib/node_modules")
-
+      (setenv "NODE_PATH" "${pkgs.nodePackages.prettier}/lib/node_modules:~/.yarn/bin:~/.npm-global/lib/node_modules")
       (setq auto-save-list-file-prefix (concat user-emacs-directory "tmp/auto-save-list/.saves-")
             tramp-auto-save-directory (concat user-emacs-directory "tmp/tramp-autosave")
             custom-file (concat user-emacs-directory "tmp/custom.el")
@@ -353,6 +353,8 @@ let
       (require 'recentf)
       (add-to-list 'recentf-exclude no-littering-var-directory)
       (add-to-list 'recentf-exclude no-littering-etc-directory)
+      (setq recentf-max-menu-items 20)
+      (setq recentf-max-saved-items 100)
       (setq auto-save-file-name-transforms
       `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
       (setq custom-file (no-littering-expand-etc-file-name "custom.el"))
@@ -468,20 +470,25 @@ let
      (use-package tide-mode
        :defer
        :config
-       (add-hook 'js-mode-hook #'tide-mode)
+       (add-hook 'typescript-mode-hook #'tide-mode)
      )
 
-     (defun jsmodes-init ()
+     (defun tsmodes-init ()
        (progn
-         (setq tide-tsserver-executable "${jsnixPkgs.typescript}/bin/tsserver")
-         (setq tide-tscompiler-executable "${jsnixPkgs.typescript}/bin/tsc")
-         (setq tide-node-executable "${pkgs.nodejs_latest}/bin/node")
          (setq tide-format-options '(:indentSize 2 :tabSize 2 :insertSpaceAfterFunctionKeywordForAnonymousFunctions t :placeOpenBraceOnNewLineForFunctions nil))
          (local-set-key (kbd "C-c d") 'tide-documentation-at-point)
          (electric-indent-local-mode nil)
          (smartparens-mode t)
          (rainbow-delimiters-mode t)
          (tide-setup)
+         (setq-local electric-indent-inhibit t)
+         ))
+
+     (defun jsmodes-init ()
+       (progn
+         (electric-indent-local-mode nil)
+         (smartparens-mode t)
+         (rainbow-delimiters-mode t)
          (setq-local electric-indent-inhibit t)
          ))
 
@@ -513,8 +520,8 @@ let
         ("\\.tsx$" . typescript-tsx-mode)
       )
       :config
-      (add-hook 'typescript-mode-hook #'jsmodes-init)
-     )
+      (add-hook 'typescript-mode-hook #'tsmodes-init)
+      )
 
       (require 'mmm-mode)
       (setq mmm-global-mode 'maybe)
@@ -583,6 +590,8 @@ let
 
       (global-corfu-mode)
 
+      (default-text-scale-mode)
+
       ${ido-config}
 
       ${keybindings-and-extra}
@@ -596,8 +605,9 @@ let
       (setq pp^L-^L-string "                                            ")
       (pretty-control-l-mode 1)
       (require 'rust-mode)
+      (require 'cmake-mode)
       (setq inhibit-startup-message t)
-      (setq initial-scratch-message ";; Happy Hacking")
+      (setq initial-scratch-message ";; Happy Hacking\n")
   '';
 
 in {
@@ -609,6 +619,8 @@ in {
       cfn-mode
       cider
       clojure-mode
+      cmake-mode
+      default-text-scale
       dracula-theme
       elm-mode
       go-mode
@@ -619,6 +631,7 @@ in {
       iter2
       nvm
       magit
+      markdown-mode
       mmm-mode
       multi
       nix-mode

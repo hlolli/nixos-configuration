@@ -15,12 +15,12 @@ in self: super: {
     sha256 = "sha256-wQ6qilUuz7dZVMo0jMmsQSabEX5Kwc8TUL1cm+LTjz0=";
   }) { localSystem = "aarch64-darwin"; }).chromedriver;
 
-  csound = (import (self.fetchFromGitHub {
+  csound = ((import (self.fetchFromGitHub {
     owner = "hlolli";
     repo = "nixpkgs";
-    rev = "3505a56ab8527dae90c438d8020f4461c3ee22c5";
-    sha256 = "sha256-1vNlRwKcs7jaHeVlvERP9G80AA7+F5yUBIuLLPizoOo=";
-  }) { localSystem = "aarch64-darwin"; }).chromedriver;
+    rev = "792b108cca40868b884bda0efcba212dfa4897fa";
+    sha256 = "sha256-0K5FMip90X5GmcmvroWSrochCXOJVfGI1BrSLYuEM1Q=";
+  }) { localSystem = "aarch64-darwin"; }).csoundWithPlugins);
 
   sqsmover = self.buildGoModule rec {
     pname = "sqsmover";

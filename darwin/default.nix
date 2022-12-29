@@ -33,26 +33,29 @@ in {
   ];
 
   config = {
-    users.nix.configureBuildUsers = true;
 
     nix = {
-      # package = pkgs.nixUnstable;
-      buildCores = 8;
+      configureBuildUsers = true;
+
+      settings = {
+        cores = 8;
+        sandbox = false;
+        require-sigs = false;
+        trusted-users = [ "hlolli" "root" ];
+        substituters = [
+          "https://cache.nixos.org/"
+          "https://emacsng.cachix.org"
+        ];
+
+        trusted-public-keys = [
+          "hydra.nixos.org-1:CNHJZBh9K4tP3EKF6FkkgeVYsS3ohTl+oS0Qa8bezVs="
+          "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+          "darwin-configuration.cachix.org-1:ysPLcM9Haaufad13Bc0x+UGj3xZhE9lP8fwp8hjjspU="
+          "emacsng.cachix.org-1:i7wOr4YpdRpWWtShI8bT6V7lOTnPeI7Ho6HaZegFWMI="
+        ];
+      };
+
       useDaemon = true;
-      useSandbox = false;
-      trustedUsers = [ "hlolli" "root" ];
-      binaryCaches = [
-        # "https://darwin-configuration.cachix.org/"
-        "https://cache.nixos.org/"
-        "https://emacsng.cachix.org"
-      ];
-      binaryCachePublicKeys = [
-        "hydra.nixos.org-1:CNHJZBh9K4tP3EKF6FkkgeVYsS3ohTl+oS0Qa8bezVs="
-        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-        "darwin-configuration.cachix.org-1:ysPLcM9Haaufad13Bc0x+UGj3xZhE9lP8fwp8hjjspU="
-        "emacsng.cachix.org-1:i7wOr4YpdRpWWtShI8bT6V7lOTnPeI7Ho6HaZegFWMI="
-      ];
-      requireSignedBinaryCaches = false;
 
       extraOptions = ''
         builders-use-substitutes = true
@@ -81,13 +84,16 @@ in {
       # (docker.override { buildxSupport = true; })
       awscli2
       aws-vault
+      bat
       # chromedriver
       colordiff
       csound
+      cmake
       # deno
       direnv
       emacs_
       exa
+      fd
       git
       gitflow
       gnupg
@@ -98,7 +104,8 @@ in {
       neovim
       nix-prefetch-github
       nixos-shell
-      nodejs_latest
+      nixpkgs-fmt
+      nodejs-18_x
       openjdk
       podman
       postgresql_13
@@ -112,10 +119,15 @@ in {
       wdiff
       # vault_
       vim
-      yarn
+      (yarn.override { nodejs = nodejs-18_x; })
       qemu
       # watchman
       wget
+
+      # csound-dev
+      # pkgs.darwin.Libsystem
+      # clang.cc
+      bison boost lldb flex gettext gtest libsndfile.out ninja portaudio
     ];
 
     environment.variables = {
@@ -131,6 +143,7 @@ in {
         enable = true;
       };
       fonts = with pkgs; [
+        fira
         kawkab-mono-font
         nerdfonts
       ];
@@ -147,10 +160,17 @@ in {
         enable = true;
         shellInit = ''
           set PATH /nix/var/nix/profiles/system/sw/bin ~/.npm-global/bin /opt/homebrew/bin ~/.yarn/bin $PATH
+          set NIX_PATH nixpkgs=https://github.com/NixOS/nixpkgs/archive/89a353ccd2a6b5c78d5ac3789e8c9bc2109a75ec.tar.gz $NIX_PATH
         '';
         interactiveShellInit = ''
+          function __fish_command_not_found_handler --on-event fish_command_not_found
+            ${pkgs.bash}/bin/bash ${pkgs.nix-index}/etc/profile.d/command-not-found.sh $argv
+          end
           function ll
             ${exa}/bin/exa --all --long --header --grid $argv
+          end
+          function cat
+            ${pkgs.bat}/bin/bat --paging=never $argv
           end
           function brew
             arch -arm64 brew $argv
