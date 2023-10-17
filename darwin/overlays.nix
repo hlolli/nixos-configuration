@@ -1,26 +1,33 @@
-{ nixpkgs, system, ... }:
+{ nixpkgs, ... }:
 
-let buildNodejs = pkgs: (pkgs.callPackage (nixpkgs + "/pkgs/development/web/nodejs/nodejs.nix") {
-      icu = pkgs.icu68;
-      python = pkgs.python3;
-    });
+let
+  buildNodejs = pkgs: (pkgs.callPackage (nixpkgs + "/pkgs/development/web/nodejs/nodejs.nix") {
+    icu = pkgs.icu68;
+    python = pkgs.python3;
+  });
 
-in self: super: {
-  # darwin = super.darwin // { xcode = myXcode; xcode_12_5 = myXcode; };
+in
+self: super: {
 
-  chromedriver = (import (self.fetchFromGitHub {
-    owner = "hlolli";
-    repo = "nixpkgs";
-    rev = "951a0aba3161918881e40aad9c1a26468198fbe3";
-    sha256 = "sha256-wQ6qilUuz7dZVMo0jMmsQSabEX5Kwc8TUL1cm+LTjz0=";
-  }) { localSystem = "aarch64-darwin"; }).chromedriver;
+  chromedriver = (import
+    (self.fetchFromGitHub {
+      owner = "hlolli";
+      repo = "nixpkgs";
+      rev = "951a0aba3161918881e40aad9c1a26468198fbe3";
+      sha256 = "sha256-wQ6qilUuz7dZVMo0jMmsQSabEX5Kwc8TUL1cm+LTjz0=";
+    })
+    { localSystem = "aarch64-darwin"; }).chromedriver;
 
-  csound = ((import (self.fetchFromGitHub {
-    owner = "hlolli";
-    repo = "nixpkgs";
-    rev = "792b108cca40868b884bda0efcba212dfa4897fa";
-    sha256 = "sha256-0K5FMip90X5GmcmvroWSrochCXOJVfGI1BrSLYuEM1Q=";
-  }) { localSystem = "aarch64-darwin"; }).csoundWithPlugins);
+  csound = (
+    (import
+      (self.fetchFromGitHub {
+        owner = "hlolli";
+        repo = "nixpkgs";
+        rev = "792b108cca40868b884bda0efcba212dfa4897fa";
+        sha256 = "sha256-0K5FMip90X5GmcmvroWSrochCXOJVfGI1BrSLYuEM1Q=";
+      })
+      { localSystem = "aarch64-darwin"; }).csoundWithPlugins
+  );
 
   sqsmover = self.buildGoModule rec {
     pname = "sqsmover";
@@ -37,25 +44,4 @@ in self: super: {
     proxyVendor = true;
   };
 
-  # pandoc = super.writeShellScriptBin "pandoc" "echo true";
-  # myXcode = (super.callPackages ./xcode.nix { }).xcode_12_5;
-
-  # nodejs = (buildNodejs super) {
-  #   enableNpm = true;
-  #   sha256 = "sha256-0Pk7mEKvuPI8B4YunNSCJucQRUf3skFdJQ/bdS0bNc8=";
-  #   version = "16.2.0";
-  # };
-  nodejs = super.nodejs-16_x;
-  # nixUnstable = super.nixUnstable.overrideAttrs (o: {
-  #   doInstallCheck = false;
-  #   doCheck = false;
-  #   patchPhase = "true";
-  #   buildInputs = o.buildInputs ++ [
-  #     super.nlohmann_json
-  #   ];
-  # });
-
-  nix = self.nixUnstable;
-  # gcc = super.gcc11;
-  # gcc10 = super.gcc11;
 }

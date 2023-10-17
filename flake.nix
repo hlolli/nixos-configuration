@@ -3,42 +3,48 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs";
-    darwin.url = "github:LnL7/nix-darwin";
-    darwin.inputs.nixpkgs.follows = "nixpkgs";
+    nixos-unstable.url = "github:NixOS/nixpkgs?ref=nixos-unstable";
+    nix-darwin.url = "github:LnL7/nix-darwin";
+    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     flake-compat = {
       url = "github:edolstra/flake-compat";
       flake = false;
     };
     flake-utils.url = "github:numtide/flake-utils";
-    emacs-ng = {
-      url = "github:hlolli/emacs-ng?rev=d3b0824a6be75087562099c2e41f6ae5839a3ec2";
-      inputs = { nixpkgs.follows = "nixpkgs"; };
-    };
+    deploy-rs.url = "github:serokell/deploy-rs";
+    deploy-rs.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, darwin, flake-compat, flake-utils, emacs-ng }:
+  outputs = inputs@{ self, nixpkgs, nixos-unstable, nix-darwin, flake-compat, flake-utils, deploy-rs }:
     let
-      # systems = [ "aarch64-darwin" "x86_64-linux" ];
-    # in flake-utils.lib.eachSystem systems (system:
-      # let
+
       inherit (pkgs) stdenv lib;
-      system = "aarch64-darwin";
-      overlays = [];
+      overlays = [ ];
+
       pkgs = (import nixpkgs {
         inherit overlays;
-        currentSystem = system;
-          config = {
-            allowUnfree = true;
-          };
+        system = "aarch64-darwin";
+        config = {
+          allowUnfree = true;
+        };
       });
-      darwinConfigurations = (darwin.lib.evalConfig {
-        inputs = { inherit emacs-ng nixpkgs system; darwin = self; };
-        modules = [ darwin.darwinModules.flakeOverrides ./darwin ];
-      } // { inherit nixpkgs; currentSystem = system; });
-    in ({
+
+      pkgs-nixos-unstable = import nixos-unstable {
+        system = "x86_64-linux";
+        config = {
+          allowUnfree = true;
+        };
+      };
+
+      darwinConfigurations = nix-darwin.lib.darwinSystem
+        {
+          modules = [ ./darwin ];
+          specialArgs = { inherit inputs; };
+        };
+    in
+    ({
       nixpkgs.config.allowUnfree = true;
 
-      # } // lib.optionalAttrs stdenv.isDarwin
       darwinConfigurations = {
         hlodvers-mbp = darwinConfigurations;
         Hlodvers-Air = darwinConfigurations;
@@ -47,15 +53,24 @@
         Hlodvers-MacBook-Air = darwinConfigurations;
       };
 
-      packages = {
-        emacs = (pkgs.callPackage ../emacs.nix {}).emacs;
-        darwinConfigurations = {
-          hlodvers-mbp = darwinConfigurations;
-          Hlodvers-Air = darwinConfigurations;
-          Hlodvers-MacBook-Pro = darwinConfigurations;
-          # Hlodvers-Air.fritz.box = darwinConfigurations;
-          Hlodvers-MacBook-Air = darwinConfigurations;
+      nixosConfigurations = {
+        hlolli-cloud = nixos-unstable.lib.nixosSystem {
+          pkgs = pkgs-nixos-unstable;
+          system = "x86_64-linux";
+          modules = [ ./hlolli-cloud/configuration.nix ];
         };
       };
+
+      deploy.nodes = {
+        hlolli-cloud = {
+          hostname = "95.216.170.8";
+          profiles.system = {
+            user = "root";
+            sshUser = "root";
+            path = deploy-rs.lib.x86_64-linux.activate.nixos self.nixosConfigurations.hlolli-cloud;
+          };
+        };
+      };
+
     });
 }

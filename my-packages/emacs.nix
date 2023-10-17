@@ -606,6 +606,35 @@ let
       (pretty-control-l-mode 1)
       (require 'rust-mode)
       (require 'cmake-mode)
+      (require 'quelpa-use-package)
+      (require 'blamer)
+
+      (use-package copilot
+       :ensure t
+       :quelpa (copilot :fetcher github
+         :repo "zerolfx/copilot.el"
+         :branch "main"
+         :files ("dist" "*.el")))
+
+      (require 'copilot)
+      (add-hook 'prog-mode-hook 'copilot-mode)
+      (with-eval-after-load 'company
+       ;; disable inline previews
+       (delq 'company-preview-if-just-one-frontend company-frontends))
+
+      (defun hlolli/copilot-tab ()
+        (interactive)
+        (or (copilot-accept-completion)
+        (indent-for-tab-command)))
+
+      (define-key copilot-completion-map (kbd "<tab>") #'hlolli/copilot-tab)
+
+      (setq blamer-idle-time 0.3)
+      (setq blamer-min-offset 70)
+
+      (default-text-scale-increase)
+      (default-text-scale-increase)
+
       (setq inhibit-startup-message t)
       (setq initial-scratch-message ";; Happy Hacking\n")
   '';
@@ -616,13 +645,16 @@ in {
          mkdir -p $out/share/emacs/site-lisp
          cp ${emacs-config} $out/share/emacs/site-lisp/default.el
       '')
+      blamer
       cfn-mode
       cider
       clojure-mode
       cmake-mode
+      dap-mode
       default-text-scale
       dracula-theme
       elm-mode
+      erlang
       go-mode
       graphql-mode
       haskell-mode
@@ -650,6 +682,7 @@ in {
       tide
       typescript-mode
       use-package
+      quelpa-use-package
       web-mode
       yaml-mode
       zig-mode

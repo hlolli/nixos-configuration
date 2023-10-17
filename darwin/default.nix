@@ -1,36 +1,42 @@
 { inputs, ... }:
 
 let
-  inherit (inputs) darwin emacs-ng nixpkgs system;
+  inherit (inputs) darwin nixpkgs;
   darwinOverlays = [
     (
       import ./overlays.nix {
-        inherit nixpkgs system;
+        inherit nixpkgs;
       }
     )
-    (final: prev: {
-      emacsng = emacs-ng.packages.x86_64-darwin.emacsng;
-    })
+    # (final: prev: {
+    #   emacsng = emacs-ng.packages.x86_64-darwin.emacsng;
+    # })
   ];
 
   pkgs = import nixpkgs {
-    inherit system;
-    config = { allowUnfree = true; };
+    # currentSystem = "aarch64-darwin";
+    system = "aarch64-darwin";
+    # localSystem = "aarch64-darwin";
+    config = {
+      allowUnfree = true;
+      # currentSystem = "aarch64-darwin";
+      # localSystem = "aarch64-darwin";
+
+    };
     overlays = darwinOverlays;
   };
   inherit (pkgs) lib;
-  goku = pkgs.callPackage ./goku/goku.nix (pkgs // {inherit (pkgs.darwin.apple_sdk.frameworks) Foundation; clang = pkgs.clang_12; });
+  goku = pkgs.callPackage ./goku/goku.nix (pkgs // { inherit (pkgs.darwin.apple_sdk.frameworks) Foundation; clang = pkgs.clang_12; });
   docker = (pkgs.docker.override { buildxSupport = true; });
-  emacs_ = (pkgs.callPackage ../emacs.nix {}).emacs;
-  exa = pkgs.exa.overrideAttrs(oldAttrs: {
+  emacs_ = (pkgs.callPackage ../my-packages/emacs.nix { }).emacs;
+  exa = pkgs.exa.overrideAttrs (oldAttrs: {
     buildInputs = [ pkgs.libgit2 ] ++ oldAttrs.buildInputs;
   });
 
-in {
+in
+{
 
-  imports = [
-    ../javascript
-  ];
+  imports = [ ];
 
   config = {
 
@@ -69,14 +75,14 @@ in {
       # https://medium.com/@zw3rk/provisioning-a-nixos-server-from-macos-d36055afc4ad
       distributedBuilds = true;
 
-      buildMachines = [ {
+      buildMachines = [{
         hostName = "vartex-dev";
         sshUser = "root";
-        sshKey = "/var/root/.ssh/id_rsa";
+        sshKey = "/Users/hlolli/.ssh/id_vartex_dev";
         systems = [ "x86_64-linux" ];
         supportedFeatures = [ "kvm" ];
         # mandatoryFeatures = [ "kvm" ];
-        maxJobs = 4;
+        maxJobs = 12;
       }];
     };
 
@@ -91,15 +97,20 @@ in {
       cmake
       # deno
       direnv
+      dos2unix
       emacs_
-      exa
+      # erlang
+      rebar3
+      eza
       fd
+      gh
       git
       gitflow
       gnupg
       goku
       hcloud
       jq
+      libredwg
       meld
       neovim
       nix-prefetch-github
@@ -116,9 +127,11 @@ in {
       terragrunt
       tmux
       tree
+      unzip
       wdiff
       # vault_
       vim
+      vscodium
       (yarn.override { nodejs = nodejs-18_x; })
       qemu
       # watchman
@@ -127,15 +140,24 @@ in {
       # csound-dev
       # pkgs.darwin.Libsystem
       # clang.cc
-      bison boost lldb flex gettext gtest libsndfile.out ninja portaudio
+      bison
+      boost
+      lldb
+      flex
+      gettext
+      gtest
+      libsndfile.out
+      ninja
+      portaudio
     ];
 
     environment.variables = {
       GOKU = "${goku}";
       GOKU_EDN_CONFIG_FILE = "${./keybindings.edn}";
-      ARCHFLAGS="-arch arm64";
+      ARCHFLAGS = "-arch arm64";
       SHELL = "${pkgs.fish}/bin/fish";
       EDITOR = "${pkgs.neovim}/bin/nvim";
+      ERL_AFLAGS = "-kernel shell_history enabled";
     };
 
     fonts = {
@@ -166,9 +188,9 @@ in {
           function __fish_command_not_found_handler --on-event fish_command_not_found
             ${pkgs.bash}/bin/bash ${pkgs.nix-index}/etc/profile.d/command-not-found.sh $argv
           end
-          function ll
-            ${exa}/bin/exa --all --long --header --grid $argv
-          end
+          # function ll
+          #   {exa}/bin/exa --all --long --header --grid $argv
+          # end
           function cat
             ${pkgs.bat}/bin/bat --paging=never $argv
           end
@@ -186,6 +208,8 @@ in {
     system = {
       stateVersion = 4;
     };
+
+    nixpkgs.hostPlatform = "aarch64-darwin";
   };
 
 }
